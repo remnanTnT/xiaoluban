@@ -8,9 +8,18 @@ from django.db import models
 
 class Environment(models.Model):
     """环境配置表"""
+    STATUS_IDLE = 'idle'
+    STATUS_OCCUPIED = 'occupied'
+    STATUS_CHOICES = [
+        (STATUS_IDLE, '空闲'),
+        (STATUS_OCCUPIED, '占用'),
+    ]
+    
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_IDLE)
+    occupant = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

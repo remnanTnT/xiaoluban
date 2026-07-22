@@ -332,33 +332,6 @@ python manage.py check_db_schema --fix
 python manage.py runserver 0.0.0.0:8000
 ```
 
-### 释放所有环境
-
-每日定时清空所有环境占用人。
-
-```bash
-# 测试运行（仅显示将要释放的环境）
-python manage.py release_all_environments --dry-run
-
-# 实际执行释放
-python manage.py release_all_environments
-```
-
-**功能说明：**
-- 将所有占用状态的环境改为空闲
-- 清空所有环境占用人
-- 更新未结束的占用记录为"自动释放"
-
-**定时任务配置（crontab）：**
-
-```bash
-# 编辑定时任务
-crontab -e
-
-# 添加以下行（每日凌晨 00:00 执行）
-0 0 * * * cd /path/to/xiaoluban/backend && /usr/bin/python3 manage.py release_all_environments >> /var/log/xiaoluban_release.log 2>&1
-```
-
 ---
 
 ## 部署说明

@@ -218,7 +218,8 @@ def get_history(request):
 def occupy_environment(request):
     """占用环境"""
     import json
-    from .models import Environment
+    from datetime import datetime
+    from .models import Environment, EnvironmentUsage
     
     try:
         data = json.loads(request.body)
@@ -255,6 +256,14 @@ def occupy_environment(request):
         env.occupant = occupant
         env.save()
         
+        # 创建占用记录
+        usage = EnvironmentUsage(
+            env_name=name,
+            occupant=occupant,
+            occupy_time=datetime.now()
+        )
+        usage.save()
+        
         logger.info(f"环境 {name} 被 {occupant} 占用")
         
         return JsonResponse({
@@ -264,7 +273,8 @@ def occupy_environment(request):
                 'name': env.name,
                 'status': env.status,
                 'occupant': env.occupant
-            }
+            },
+            'usage_id': usage.id
         })
         
     except Exception as e:
@@ -280,11 +290,13 @@ def occupy_environment(request):
 def release_environment(request):
     """释放环境"""
     import json
-    from .models import Environment
+    from datetime import datetime
+    from .models import Environment, EnvironmentUsage
     
     try:
         data = json.loads(request.body)
         name = data.get('name', '').strip()
+        is_manual = data.get('is_manual', True)
         
         if not name:
             return JsonResponse({
@@ -304,6 +316,17 @@ def release_environment(request):
         env.occupant = None
         env.save()
         
+        # 更新占用记录
+        latest_usage = EnvironmentUsage.objects.filter(
+            env_name=name, 
+            release_time__isnull=True
+        ).order_by('-occupy_time').first()
+        
+        if latest_usage:
+            latest_usage.release_time = datetime.now()
+            latest_usage.is_manual_release = EnvironmentUsage.RELEASE_MANUAL if is_manual else EnvironmentUsage.RELEASE_AUTO
+            latest_usage.save()
+        
         logger.info(f"环境 {name} 已释放")
         
         return JsonResponse({
@@ -318,6 +341,38 @@ def release_environment(request):
         
     except Exception as e:
         logger.error(f"释放环境失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_environment_usage(request):
+    """获取环境占用记录"""
+    from .models import EnvironmentUsage
+    
+    try:
+        env_name = request.GET.get('env_name', '').strip()
+        limit = int(request.GET.get('limit', 20))
+        
+        usages = EnvironmentUsage.objects.all()
+        
+        if env_name:
+            usages = usages.filter(env_name=env_name)
+        
+        usages = usages[:limit].values(
+            'id', 'env_name', 'occupant', 
+            'occupy_time', 'release_time', 'is_manual_release',
+            'created_at'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'usages': list(usages)
+        })
+    except Exception as e:
+        logger.error(f"获取占用记录失败: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)

@@ -14,6 +14,7 @@ urlpatterns = [
     path('environments/remove', views.remove_environment, name='remove_environment'),
     path('environments/occupy', views.occupy_environment, name='occupy_environment'),
     path('environments/release', views.release_environment, name='release_environment'),
+    path('environments/usage', views.get_environment_usage, name='environment_usage'),
     
     # 历史记录
     path('history', views.get_history, name='history'),

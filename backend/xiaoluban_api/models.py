@@ -53,3 +53,31 @@ class History(models.Model):
 
     def __str__(self):
         return f"{self.action} - {self.timestamp}"
+
+
+class EnvironmentUsage(models.Model):
+    """环境占用记录表"""
+    RELEASE_AUTO = 'auto'
+    RELEASE_MANUAL = 'manual'
+    RELEASE_CHOICES = [
+        (RELEASE_AUTO, '自动释放'),
+        (RELEASE_MANUAL, '手动释放'),
+    ]
+    
+    id = models.BigAutoField(primary_key=True)
+    env_name = models.CharField(max_length=100)
+    occupant = models.CharField(max_length=100)
+    occupy_time = models.DateTimeField()
+    release_time = models.DateTimeField(null=True, blank=True)
+    is_manual_release = models.CharField(max_length=10, choices=RELEASE_CHOICES, default=RELEASE_MANUAL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'xiaoluban_environment_usage'
+        managed = False
+        ordering = ['-occupy_time']
+        verbose_name = '环境占用记录'
+        verbose_name_plural = '环境占用记录列表'
+
+    def __str__(self):
+        return f"{self.env_name} - {self.occupant} - {self.occupy_time}"

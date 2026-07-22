@@ -110,23 +110,23 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"  ✗ 失败: {e}"))
     
-def generate_ddl(self):
-    """生成修复 DDL 语句"""
-    ddl = []
-    
-    for issue in self.schema_issues:
-        if "不存在" in issue:
-            # 创建表
-            parts = issue.split()
-            table_name = parts[1]
-            ddl.append(f'CREATE TABLE "{table_name}" (id BIGSERIAL PRIMARY KEY);')
+    def generate_ddl(self):
+        """生成修复 DDL 语句"""
+        ddl = []
         
-        elif "缺少列" in issue:
-            # 添加列（需要根据模型字段类型确定）
-            parts = issue.split()
-            table_name = parts[1]
-            column_name = parts[3]
-            # 使用双引号括起来避免保留关键字冲突
-            ddl.append(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" TEXT;')
-    
-    return ddl
+        for issue in self.schema_issues:
+            if "不存在" in issue:
+                # 创建表
+                parts = issue.split()
+                table_name = parts[1]
+                ddl.append(f'CREATE TABLE "{table_name}" (id BIGSERIAL PRIMARY KEY);')
+            
+            elif "缺少列" in issue:
+                # 添加列（需要根据模型字段类型确定）
+                parts = issue.split()
+                table_name = parts[1]
+                column_name = parts[3]
+                # 使用双引号括起来避免保留关键字冲突
+                ddl.append(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" TEXT;')
+        
+        return ddl

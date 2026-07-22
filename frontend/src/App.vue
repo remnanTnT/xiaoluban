@@ -410,11 +410,32 @@ async function loadEnvironments() {
     const response = await fetch(`${API_BASE}/api/environments`)
     const data = await response.json()
     if (data.success) {
-      roceEnvironments.value = data.environments.map(env => ({
-        ...env,
-        occupied: env.status === 'occupied',
-        occupiedBy: env.occupant
-      }))
+      const envMap = {}
+      data.environments.forEach(env => {
+        envMap[env.name] = {
+          ...env,
+          occupied: env.status === 'occupied',
+          occupiedBy: env.occupant || ''
+        }
+      })
+      
+      const existingOrder = roceEnvironments.value.map(e => e.name)
+      const newOrder = data.environments.map(e => e.name)
+      
+      if (existingOrder.length > 0 && existingOrder.join(',') === newOrder.join(',')) {
+        roceEnvironments.value = roceEnvironments.value.map(env => ({
+          ...envMap[env.name],
+          id: env.id
+        }))
+      } else {
+        roceEnvironments.value = data.environments
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(env => ({
+            ...env,
+            occupied: env.status === 'occupied',
+            occupiedBy: env.occupant || ''
+          }))
+      }
     }
   } catch (error) {
     console.error('加载环境失败:', error)
@@ -432,6 +453,8 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
+      } else {
+        alert('释放失败: ' + data.error)
       }
     } else if (!env.occupied) {
       const response = await fetch(`${API_BASE}/api/environments/occupy`, {
@@ -442,10 +465,15 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
+      } else {
+        alert('占用失败: ' + data.error)
       }
+    } else {
+      alert(`环境已被 ${env.occupiedBy} 占用，无法操作`)
     }
   } catch (error) {
     console.error('操作失败:', error)
+    alert('操作失败: ' + error.message)
   }
 }
 

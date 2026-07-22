@@ -54,11 +54,27 @@
       "id": 1,
       "name": "env1",
       "description": "环境描述",
-      "created_at": "2024-01-01T00:00:00Z"
+      "status": "idle",
+      "occupant": null,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "env2",
+      "description": "环境描述",
+      "status": "occupied",
+      "occupant": "user123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
     }
   ]
 }
 ```
+
+**状态说明：**
+- `idle`: 空闲
+- `occupied`: 占用
 
 ---
 
@@ -66,7 +82,7 @@
 
 **POST** `/api/environments/add`
 
-添加新环境。
+添加新环境。新创建的环境默认状态为 "空闲"。
 
 **请求体：**
 ```json
@@ -83,7 +99,9 @@
   "environment": {
     "id": 1,
     "name": "环境名称",
-    "description": "环境描述"
+    "description": "环境描述",
+    "status": "idle",
+    "occupant": null
   }
 }
 ```
@@ -113,7 +131,72 @@
 
 ---
 
-### 5. 获取历史记录
+### 5. 占用环境
+
+**POST** `/api/environments/occupy`
+
+占用指定环境。环境必须处于 "空闲" 状态才能被占用。
+
+**请求体：**
+```json
+{
+  "name": "环境名称",
+  "occupant": "占用人"
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "environment": {
+    "id": 1,
+    "name": "环境名称",
+    "status": "occupied",
+    "occupant": "占用人"
+  }
+}
+```
+
+**错误响应：**
+```json
+{
+  "success": false,
+  "error": "环境 \"环境名称\" 已被 user123 占用"
+}
+```
+
+---
+
+### 6. 释放环境
+
+**POST** `/api/environments/release`
+
+释放指定环境。释放后状态变为 "空闲"，占用人清空。
+
+**请求体：**
+```json
+{
+  "name": "环境名称"
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "environment": {
+    "id": 1,
+    "name": "环境名称",
+    "status": "idle",
+    "occupant": null
+  }
+}
+```
+
+---
+
+### 7. 获取历史记录
 
 **GET** `/api/history?limit=50`
 
@@ -152,10 +235,16 @@
 | id | BigAuto | 主键 |
 | name | CharField(100) | 环境名称（唯一） |
 | description | TextField | 环境描述 |
+| status | CharField(20) | 状态：idle（空闲）/ occupied（占用） |
+| occupant | CharField(100) | 占用人（占用时必填，空闲时为空） |
 | created_at | DateTime | 创建时间 |
 | updated_at | DateTime | 更新时间 |
 
 **表名：** `xiaoluban_environments`
+
+**状态约束：**
+- `idle`（空闲）：occupant 必须为空
+- `occupied`（占用）：occupant 不能为空
 
 ### History（历史记录）
 

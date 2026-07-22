@@ -255,6 +255,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
 const activeTab = ref('tool')
 const currentAction = ref('')
 const selectedEnv = ref('')
@@ -323,7 +325,7 @@ async function executeCommand() {
   resultType.value = ''
   
   try {
-    const response = await fetch('/api/execute', {
+    const response = await fetch(`${API_BASE}/api/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -352,7 +354,7 @@ async function executeTest() {
   resultType.value = ''
   
   try {
-    const response = await fetch('/api/execute', {
+    const response = await fetch(`${API_BASE}/api/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -381,7 +383,7 @@ async function executeReset() {
   resultType.value = ''
   
   try {
-    const response = await fetch('/api/execute', {
+    const response = await fetch(`${API_BASE}/api/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -407,7 +409,7 @@ async function executeReset() {
 
 async function loadEnvironments() {
   try {
-    const response = await fetch('/api/environments')
+    const response = await fetch(`${API_BASE}/api/environments`)
     const data = await response.json()
     if (data.success) {
       roceEnvironments.value = data.environments
@@ -420,7 +422,7 @@ async function loadEnvironments() {
 async function toggleEnvironment(env) {
   try {
     if (env.occupied && env.occupiedBy === currentUser.value) {
-      const response = await fetch(`/api/environments/release/${env.id}`, {
+      const response = await fetch(`${API_BASE}/api/environments/release/${env.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: currentUser.value })
@@ -430,7 +432,7 @@ async function toggleEnvironment(env) {
         await loadEnvironments()
       }
     } else if (!env.occupied) {
-      const response = await fetch(`/api/environments/occupy/${env.id}`, {
+      const response = await fetch(`${API_BASE}/api/environments/occupy/${env.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: currentUser.value })
@@ -449,7 +451,7 @@ async function addEnvironment() {
   if (!newEnvName.value) return
   
   try {
-    const response = await fetch('/api/environments/add', {
+    const response = await fetch(`${API_BASE}/api/environments/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -470,7 +472,7 @@ async function addEnvironment() {
 
 async function deleteEnvironment(id) {
   try {
-    const response = await fetch(`/api/environments/${id}`, {
+    const response = await fetch(`${API_BASE}/api/environments/${id}`, {
       method: 'DELETE'
     })
     const data = await response.json()
@@ -489,7 +491,7 @@ async function loadHistory() {
   }
   
   try {
-    const response = await fetch(`/api/environments/${selectedHistoryEnv.value}/history`)
+    const response = await fetch(`${API_BASE}/api/environments/${selectedHistoryEnv.value}/history`)
     const data = await response.json()
     if (data.success) {
       historyData.value = data.history

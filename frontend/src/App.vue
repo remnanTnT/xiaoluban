@@ -412,7 +412,11 @@ async function loadEnvironments() {
     const response = await fetch(`${API_BASE}/api/environments`)
     const data = await response.json()
     if (data.success) {
-      roceEnvironments.value = data.environments
+      roceEnvironments.value = data.environments.map(env => ({
+        ...env,
+        occupied: env.status === 'occupied',
+        occupiedBy: env.occupant
+      }))
     }
   } catch (error) {
     console.error('加载环境失败:', error)
@@ -422,20 +426,20 @@ async function loadEnvironments() {
 async function toggleEnvironment(env) {
   try {
     if (env.occupied && env.occupiedBy === currentUser.value) {
-      const response = await fetch(`${API_BASE}/api/environments/release/${env.id}`, {
+      const response = await fetch(`${API_BASE}/api/environments/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: currentUser.value })
+        body: JSON.stringify({ name: env.name })
       })
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
       }
     } else if (!env.occupied) {
-      const response = await fetch(`${API_BASE}/api/environments/occupy/${env.id}`, {
+      const response = await fetch(`${API_BASE}/api/environments/occupy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: currentUser.value })
+        body: JSON.stringify({ name: env.name, occupant: currentUser.value })
       })
       const data = await response.json()
       if (data.success) {

@@ -88,7 +88,9 @@ def get_environments(request):
     from .models import Environment
     
     try:
-        environments = Environment.objects.all().values('id', 'name', 'description', 'created_at')
+        environments = Environment.objects.all().values(
+            'id', 'name', 'description', 'status', 'occupant', 'created_at', 'updated_at'
+        )
         return JsonResponse({
             'success': True,
             'environments': list(environments)
@@ -205,6 +207,117 @@ def get_history(request):
         })
     except Exception as e:
         logger.error(f"获取历史记录失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def occupy_environment(request):
+    """占用环境"""
+    import json
+    from .models import Environment
+    
+    try:
+        data = json.loads(request.body)
+        name = data.get('name', '').strip()
+        occupant = data.get('occupant', '').strip()
+        
+        if not name:
+            return JsonResponse({
+                'success': False,
+                'error': '环境名称不能为空'
+            }, status=400)
+        
+        if not occupant:
+            return JsonResponse({
+                'success': False,
+                'error': '占用人不能为空'
+            }, status=400)
+        
+        try:
+            env = Environment.objects.get(name=name)
+        except Environment.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'环境 "{name}" 不存在'
+            }, status=404)
+        
+        if env.status == Environment.STATUS_OCCUPIED:
+            return JsonResponse({
+                'success': False,
+                'error': f'环境 "{name}" 已被 {env.occupant} 占用'
+            }, status=400)
+        
+        env.status = Environment.STATUS_OCCUPIED
+        env.occupant = occupant
+        env.save()
+        
+        logger.info(f"环境 {name} 被 {occupant} 占用")
+        
+        return JsonResponse({
+            'success': True,
+            'environment': {
+                'id': env.id,
+                'name': env.name,
+                'status': env.status,
+                'occupant': env.occupant
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"占用环境失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def release_environment(request):
+    """释放环境"""
+    import json
+    from .models import Environment
+    
+    try:
+        data = json.loads(request.body)
+        name = data.get('name', '').strip()
+        
+        if not name:
+            return JsonResponse({
+                'success': False,
+                'error': '环境名称不能为空'
+            }, status=400)
+        
+        try:
+            env = Environment.objects.get(name=name)
+        except Environment.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'环境 "{name}" 不存在'
+            }, status=404)
+        
+        env.status = Environment.STATUS_IDLE
+        env.occupant = None
+        env.save()
+        
+        logger.info(f"环境 {name} 已释放")
+        
+        return JsonResponse({
+            'success': True,
+            'environment': {
+                'id': env.id,
+                'name': env.name,
+                'status': env.status,
+                'occupant': env.occupant
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"释放环境失败: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)

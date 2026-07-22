@@ -176,38 +176,36 @@
         </div>
 
         <div class="history-panel">
-          <div class="panel-title">历史记录</div>
+          <div class="panel-title">占用历史记录</div>
           <select v-model="selectedHistoryEnv" class="env-select">
             <option value="">选择环境查看历史</option>
-            <option v-for="env in roceEnvironments" :key="env.id" :value="env.id">
+            <option v-for="env in roceEnvironments" :key="env.id" :value="env.name">
               {{ env.name }}
             </option>
           </select>
           
-          <div v-if="selectedHistoryEnv && historyData.length > 0" class="history-chart">
-            <div class="chart-container">
-              <div class="timeline-axis">
-                <div v-for="day in last7Days" :key="day" class="day-label">{{ day }}</div>
+          <div v-if="selectedHistoryEnv && historyData.length > 0" class="usage-list">
+            <div 
+              v-for="item in historyData" 
+              :key="item.id" 
+              class="usage-item"
+            >
+              <div class="usage-header">
+                <span class="usage-occupant">{{ item.occupant }}</span>
+                <span class="usage-time">{{ formatDateTime(item.occupy_time) }}</span>
               </div>
-              <div class="timeline-items">
-                <div 
-                  v-for="item in historyData" 
-                  :key="item.id" 
-                  class="timeline-item"
-                  :class="item.action"
-                  :style="getTimelineStyle(item)"
-                >
-                  <div class="tooltip">
-                    {{ item.action === 'occupy' ? '占用' : '释放' }} - {{ formatDateTime(item.timestamp) }}
-                    <br>用户: {{ item.user }}
-                  </div>
-                </div>
+              <div class="usage-details">
+                <span class="usage-label">占用时间:</span> {{ formatFullDateTime(item.occupy_time) }}
+                <br>
+                <span class="usage-label">释放时间:</span> {{ item.release_time ? formatFullDateTime(item.release_time) : '未释放' }}
+                <br>
+                <span class="usage-label">释放方式:</span> {{ item.is_manual_release === 'manual' ? '手动释放' : '自动释放' }}
               </div>
             </div>
           </div>
           
           <div v-else-if="selectedHistoryEnv" class="no-data">
-            暂无历史记录
+            暂无占用记录
           </div>
         </div>
       </div>
@@ -495,10 +493,10 @@ async function loadHistory() {
   }
   
   try {
-    const response = await fetch(`${API_BASE}/api/environments/${selectedHistoryEnv.value}/history`)
+    const response = await fetch(`${API_BASE}/api/environments/usage?env_name=${encodeURIComponent(selectedHistoryEnv.value)}&limit=10`)
     const data = await response.json()
     if (data.success) {
-      historyData.value = data.history
+      historyData.value = data.usages
     }
   } catch (error) {
     console.error('加载历史失败:', error)
@@ -513,6 +511,11 @@ function formatTime(timestamp) {
 function formatDateTime(timestamp) {
   const date = new Date(timestamp)
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
+
+function formatFullDateTime(timestamp) {
+  const date = new Date(timestamp)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
 }
 
 function getTimelineStyle(item) {

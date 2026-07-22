@@ -226,6 +226,43 @@
 
 ---
 
+### 8. 获取环境占用记录
+
+**GET** `/api/environments/usage?env_name=xxx&limit=20`
+
+获取环境占用历史记录。
+
+**查询参数：**
+- `env_name` (可选): 环境名称，不传则返回所有环境
+- `limit` (可选): 返回记录数量，默认 20
+
+**响应：**
+```json
+{
+  "success": true,
+  "usages": [
+    {
+      "id": 1,
+      "env_name": "env1",
+      "occupant": "user123",
+      "occupy_time": "2024-01-01T10:00:00",
+      "release_time": "2024-01-01T12:00:00",
+      "is_manual_release": "manual",
+      "created_at": "2024-01-01T10:00:00"
+    }
+  ]
+}
+```
+
+**字段说明：**
+- `occupy_time`: 占用时间（北京时间）
+- `release_time`: 释放时间（北京时间），未释放时为 null
+- `is_manual_release`: 释放方式
+  - `manual`: 手动释放
+  - `auto`: 自动释放
+
+---
+
 ## 数据库模型
 
 ### Environment（环境）
@@ -260,6 +297,20 @@
 | timestamp | DateTime | 时间戳 |
 
 **表名：** `xiaoluban_history`
+
+### EnvironmentUsage（环境占用记录）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BigAuto | 主键 |
+| env_name | CharField(100) | 环境名称 |
+| occupant | CharField(100) | 占用人 |
+| occupy_time | DateTime | 占用时间（北京时间） |
+| release_time | DateTime | 释放时间（北京时间），未释放时为空 |
+| is_manual_release | CharField(10) | 释放方式：manual（手动）/ auto（自动） |
+| created_at | DateTime | 创建时间 |
+
+**表名：** `xiaoluban_environment_usage`
 
 ---
 

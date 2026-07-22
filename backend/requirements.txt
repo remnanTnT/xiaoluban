@@ -1,0 +1,15 @@
+# Django 核心
+Django>=4.2,<5.0
+
+# CORS 支持
+django-cors-headers>=4.0
+
+# PostgreSQL 驱动
+psycopg2-binary>=2.9
+
+# 开发工具
+python-dotenv>=1.0
+
+# 测试工具
+pytest>=7.0
+pytest-django>=4.5

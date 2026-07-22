@@ -84,12 +84,13 @@ def execute_command(request):
 
 @require_http_methods(["GET"])
 def get_environments(request):
-    """获取环境列表"""
+    """获取环境列表（只返回 is_used=True 的环境）"""
     from .models import Environment
     
     try:
-        environments = Environment.objects.all().values(
-            'id', 'name', 'description', 'status', 'occupant', 'created_at', 'updated_at'
+        environments = Environment.objects.filter(is_used=True).values(
+            'id', 'name', 'description', 'status', 'occupant', 
+            'is_used', 'offline_time', 'created_at', 'updated_at'
         )
         return JsonResponse({
             'success': True,
@@ -121,14 +122,36 @@ def add_environment(request):
                 'error': '环境名称不能为空'
             }, status=400)
         
-        # 检查是否已存在
-        if Environment.objects.filter(name=name).exists():
-            return JsonResponse({
-                'success': False,
-                'error': f'环境 "{name}" 已存在'
-            }, status=400)
+        # 检查是否存在（包括已下线的）
+        existing_env = Environment.objects.filter(name=name).first()
         
-        env = Environment(name=name, description=description)
+        if existing_env:
+            if existing_env.is_used:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'环境 "{name}" 已存在'
+                }, status=400)
+            # 恢复已下线的环境
+            existing_env.is_used = True
+            existing_env.offline_time = None
+            existing_env.description = description
+            existing_env.save()
+            
+            logger.info(f"恢复环境: {name}")
+            
+            return JsonResponse({
+                'success': True,
+                'environment': {
+                    'id': existing_env.id,
+                    'name': existing_env.name,
+                    'description': existing_env.description,
+                    'is_used': existing_env.is_used
+                },
+                'message': f'环境 "{name}" 已恢复'
+            })
+        
+        # 创建新环境
+        env = Environment(name=name, description=description, is_used=True)
         env.save()
         
         logger.info(f"添加环境: {name}")
@@ -138,7 +161,8 @@ def add_environment(request):
             'environment': {
                 'id': env.id,
                 'name': env.name,
-                'description': env.description
+                'description': env.description,
+                'is_used': env.is_used
             }
         })
         
@@ -153,8 +177,9 @@ def add_environment(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def remove_environment(request):
-    """移除环境"""
+    """移除环境（软删除）"""
     import json
+    from datetime import datetime
     from .models import Environment
     
     try:
@@ -167,23 +192,35 @@ def remove_environment(request):
                 'error': '环境名称不能为空'
             }, status=400)
         
-        deleted, _ = Environment.objects.filter(name=name).delete()
-        
-        if deleted == 0:
+        try:
+            env = Environment.objects.get(name=name)
+        except Environment.DoesNotExist:
             return JsonResponse({
                 'success': False,
                 'error': f'环境 "{name}" 不存在'
             }, status=404)
         
-        logger.info(f"移除环境: {name}")
+        if not env.is_used:
+            return JsonResponse({
+                'success': False,
+                'error': f'环境 "{name}" 已下线'
+            }, status=400)
+        
+        env.is_used = False
+        env.offline_time = datetime.now()
+        env.status = Environment.STATUS_IDLE
+        env.occupant = None
+        env.save()
+        
+        logger.info(f"下线环境: {name}")
         
         return JsonResponse({
             'success': True,
-            'message': f'环境 "{name}" 已删除'
+            'message': f'环境 "{name}" 已下线'
         })
         
     except Exception as e:
-        logger.error(f"移除环境失败: {str(e)}")
+        logger.error(f"下线环境失败: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)

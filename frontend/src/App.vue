@@ -1695,6 +1695,7 @@ onMounted(() => {
 
 .env-item-type {
   display: inline-block;
+  align-self: flex-start;
   padding: 2px 8px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -1704,6 +1705,7 @@ onMounted(() => {
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .env-item-desc {

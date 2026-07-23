@@ -693,9 +693,6 @@ async function toggleEnvironment(env) {
     showToast('操作失败: ' + error.message, 'error')
   }
 }
-    alert('操作失败: ' + error.message)
-  }
-}
 
 async function addEnvironment() {
   if (!newEnvName.value) return

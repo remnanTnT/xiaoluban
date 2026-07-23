@@ -216,16 +216,35 @@
             v-for="env in roceEnvironments" 
             :key="env.id" 
             class="env-card"
-            :class="{ occupied: env.occupied, mine: env.occupiedBy === currentUser }"
+            :class="{ occupied: env.occupied, mine: env.occupiedBy === currentUser, queued: isInQueue(env) }"
             @click="toggleEnvironment(env)"
           >
             <div class="env-status-dot" :class="env.occupied ? 'occupied' : 'free'"></div>
             <div class="env-name">{{ env.name }}</div>
             <div class="env-description">{{ env.description || '无备注' }}</div>
-            <div v-if="env.occupied" class="env-user">占用: {{ env.occupiedBy }}</div>
-            <div v-if="env.queued_users && env.queued_users.length > 0" class="env-queue">
-              排队: {{ env.queued_users.join(', ') }}
+            
+            <!-- 占用状态显示 -->
+            <div v-if="env.occupied" class="env-user">
+              <span v-if="env.occupiedBy === currentUser" class="env-status-mine">正在占用</span>
+              <span v-else>占用: {{ env.occupiedBy }}</span>
             </div>
+            
+            <!-- 排队信息显示 -->
+            <template v-if="env.queued_users && env.queued_users.length > 0">
+              <!-- 自己占用时，显示排队人数 -->
+              <div v-if="env.occupiedBy === currentUser" class="env-queue">
+                排队人数: {{ env.queued_users.length }}人
+              </div>
+              <!-- 自己在排队时，显示前面还有几位 -->
+              <div v-else-if="isInQueue(env)" class="env-queue-mine">
+                前面还有 {{ getQueuePosition(env) }} 位
+              </div>
+              <!-- 其他人占用，显示排队列表 -->
+              <div v-else class="env-queue">
+                排队: {{ env.queued_users.join(', ') }}
+              </div>
+            </template>
+            
             <div v-if="env.occupiedAt" class="env-time">{{ formatTime(env.occupiedAt) }}</div>
           </div>
         </div>
@@ -507,6 +526,16 @@ async function loadEnvironments() {
   } catch (error) {
     console.error('加载环境失败:', error)
   }
+}
+
+function isInQueue(env) {
+  return env.queued_users && env.queued_users.includes(currentUser.value)
+}
+
+function getQueuePosition(env) {
+  if (!env.queued_users) return 0
+  const index = env.queued_users.indexOf(currentUser.value)
+  return index >= 0 ? index : 0
 }
 
 async function toggleEnvironment(env) {
@@ -793,6 +822,11 @@ onMounted(() => {
   background: rgba(0, 255, 136, 0.05);
 }
 
+.env-card.queued {
+  border-color: var(--primary-color);
+  background: rgba(0, 212, 255, 0.05);
+}
+
 .env-status-dot {
   position: absolute;
   top: 12px;
@@ -830,10 +864,22 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
+.env-status-mine {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
 .env-queue {
   font-size: 0.85rem;
   color: #ffa502;
   margin-top: 4px;
+}
+
+.env-queue-mine {
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  margin-top: 4px;
+  font-weight: 500;
 }
 
 .env-time {

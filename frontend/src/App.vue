@@ -743,6 +743,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 24px;
+  align-items: start;
 }
 
 .environments-grid {
@@ -825,6 +826,8 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 24px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
 .env-select {

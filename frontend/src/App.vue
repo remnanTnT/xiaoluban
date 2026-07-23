@@ -674,19 +674,44 @@ function getQueuePosition(env) {
   return index >= 0 ? index : 0
 }
 
-// 截取文本前3行
-function truncateText(text, maxLines = 3) {
+// 截取文本前3行，并对每行进行字符限制
+function truncateText(text, maxLines = 3, maxCharsPerLine = 50) {
   if (!text) return ''
   const lines = text.split('\n')
-  if (lines.length <= maxLines) return text
-  return lines.slice(0, maxLines).join('\n') + '...'
+  
+  // 截取行数
+  const truncatedLines = lines.slice(0, maxLines)
+  
+  // 对每行进行字符限制
+  const processedLines = truncatedLines.map(line => {
+    if (line.length > maxCharsPerLine) {
+      return line.substring(0, maxCharsPerLine) + '...'
+    }
+    return line
+  })
+  
+  // 如果总行数超过maxLines，添加省略号
+  if (lines.length > maxLines) {
+    return processedLines.join('\n') + '...'
+  }
+  
+  return processedLines.join('\n')
 }
 
-// 判断文本是否超过指定行数
-function isTextOverflow(text, maxLines = 3) {
+// 判断文本是否超过指定行数或单行字符数限制
+function isTextOverflow(text, maxLines = 3, maxCharsPerLine = 50) {
   if (!text) return false
   const lines = text.split('\n')
-  return lines.length > maxLines
+  
+  // 检查行数是否超过
+  if (lines.length > maxLines) return true
+  
+  // 检查是否有单行字符数超过限制
+  for (const line of lines) {
+    if (line.length > maxCharsPerLine) return true
+  }
+  
+  return false
 }
 
 // 复制文本到剪贴板
@@ -1113,15 +1138,6 @@ onMounted(() => {
 .env-description.has-more {
   cursor: help;
   position: relative;
-}
-
-.env-description.has-more::after {
-  content: '查看更多';
-  display: block;
-  font-size: 0.75rem;
-  color: var(--primary-color);
-  margin-top: 4px;
-  opacity: 0.7;
 }
 
 .env-description:hover .desc-tooltip {

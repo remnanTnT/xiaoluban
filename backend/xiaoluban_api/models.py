@@ -18,6 +18,7 @@ class Environment(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
+    type = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_IDLE)
     occupant = models.CharField(max_length=100, blank=True, null=True)
     queued_users = models.TextField(blank=True, null=True)

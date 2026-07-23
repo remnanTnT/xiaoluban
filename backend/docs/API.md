@@ -84,6 +84,7 @@
       "id": 1,
       "name": "env1",
       "description": "环境描述",
+      "type": "开发环境",
       "status": "idle",
       "occupant": null,
       "queued_users": [],
@@ -96,6 +97,7 @@
       "id": 2,
       "name": "env2",
       "description": "环境描述",
+      "type": "测试环境",
       "status": "occupied",
       "occupant": "user123",
       "queued_users": ["user456", "user789"],
@@ -113,6 +115,7 @@
 - `occupied`: 占用
 
 **字段说明：**
+- `type`: 环境类型（可选），用于环境分类，如"开发环境"、"测试环境"等
 - `queued_users`: 排队用户列表，按排队顺序排列
 
 ---
@@ -127,9 +130,15 @@
 ```json
 {
   "name": "环境名称",
-  "description": "环境描述（可选）"
+  "description": "环境描述（可选）",
+  "type": "环境类型（可选）"
 }
 ```
+
+**参数说明：**
+- `name` (必填): 环境名称
+- `description` (可选): 环境描述
+- `type` (可选): 环境类型，用于环境分类，如"开发环境"、"测试环境"等
 
 **响应：**
 ```json
@@ -139,6 +148,7 @@
     "id": 1,
     "name": "环境名称",
     "description": "环境描述",
+    "type": "环境类型",
     "status": "idle",
     "occupant": null
   }
@@ -147,7 +157,47 @@
 
 ---
 
-### 4. 移除环境
+### 4. 更新环境
+
+**POST** `/api/environments/update`
+
+更新环境信息。
+
+**请求体：**
+```json
+{
+  "id": 1,
+  "name": "新环境名称",
+  "description": "新环境描述",
+  "type": "新环境类型"
+}
+```
+
+**参数说明：**
+- `id` (必填): 环境ID
+- `name` (必填): 新环境名称
+- `description` (可选): 新环境描述
+- `type` (可选): 新环境类型
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "环境信息已更新",
+  "environment": {
+    "id": 1,
+    "name": "新环境名称",
+    "description": "新环境描述",
+    "type": "新环境类型",
+    "status": "idle",
+    "occupant": null
+  }
+}
+```
+
+---
+
+### 5. 移除环境
 
 **POST** `/api/environments/remove`
 
@@ -170,7 +220,7 @@
 
 ---
 
-### 5. 占用环境
+### 6. 占用环境
 
 **POST** `/api/environments/occupy`
 
@@ -237,7 +287,7 @@
 
 ---
 
-### 6. 释放环境
+### 7. 释放环境
 
 **POST** `/api/environments/release`
 
@@ -290,7 +340,7 @@
 
 ---
 
-### 7. 获取历史记录
+### 8. 获取历史记录
 
 **GET** `/api/history?limit=50`
 
@@ -320,7 +370,7 @@
 
 ---
 
-### 8. 获取环境占用记录
+### 9. 获取环境占用记录
 
 **GET** `/api/environments/usage?env_name=xxx&limit=20`
 
@@ -366,6 +416,7 @@
 | id | BigAuto | 主键 |
 | name | CharField(100) | 环境名称（唯一） |
 | description | TextField | 环境描述 |
+| type | CharField(50) | 环境类型（可选），用于环境分类 |
 | status | CharField(20) | 状态：idle（空闲）/ occupied（占用） |
 | occupant | CharField(100) | 占用人（占用时必填，空闲时为空） |
 | created_at | DateTime | 创建时间 |

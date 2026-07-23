@@ -100,6 +100,7 @@ def get_environments(request):
                 'id': env.id,
                 'name': env.name,
                 'description': env.description,
+                'type': env.type,
                 'status': env.status,
                 'occupant': env.occupant,
                 'queued_users': queued_users,
@@ -132,6 +133,7 @@ def add_environment(request):
         data = json.loads(request.body)
         name = data.get('name', '').strip()
         description = data.get('description', '')
+        env_type = data.get('type', '')
         
         if not name:
             return JsonResponse({
@@ -152,6 +154,7 @@ def add_environment(request):
             existing_env.is_used = True
             existing_env.offline_time = None
             existing_env.description = description
+            existing_env.type = env_type if env_type else None
             existing_env.save()
             
             logger.info(f"恢复环境: {name}")
@@ -162,13 +165,14 @@ def add_environment(request):
                     'id': existing_env.id,
                     'name': existing_env.name,
                     'description': existing_env.description,
+                    'type': existing_env.type,
                     'is_used': existing_env.is_used
                 },
                 'message': f'环境 "{name}" 已恢复'
             })
         
         # 创建新环境
-        env = Environment(name=name, description=description, is_used=True)
+        env = Environment(name=name, description=description, type=env_type if env_type else None, is_used=True)
         env.save()
         
         logger.info(f"添加环境: {name}")
@@ -179,6 +183,7 @@ def add_environment(request):
                 'id': env.id,
                 'name': env.name,
                 'description': env.description,
+                'type': env.type,
                 'is_used': env.is_used
             }
         })
@@ -256,6 +261,7 @@ def update_environment(request):
         env_id = data.get('id')
         new_name = data.get('name', '').strip()
         new_description = data.get('description', '')
+        new_type = data.get('type', '')
         
         if not env_id:
             return JsonResponse({
@@ -289,6 +295,7 @@ def update_environment(request):
         old_name = env.name
         env.name = new_name
         env.description = new_description
+        env.type = new_type if new_type else None
         env.save()
         
         logger.info(f"更新环境: {old_name} -> {new_name}")
@@ -300,6 +307,7 @@ def update_environment(request):
                 'id': env.id,
                 'name': env.name,
                 'description': env.description,
+                'type': env.type,
                 'status': env.status,
                 'occupant': env.occupant
             }

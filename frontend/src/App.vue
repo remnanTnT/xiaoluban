@@ -211,14 +211,21 @@
       </div>
 
       <div class="roce-content">
-        <div class="environments-grid">
-          <div 
-            v-for="env in roceEnvironments" 
-            :key="env.id" 
-            class="env-card"
-            :class="{ occupied: env.occupied, mine: env.occupiedBy === currentUser, queued: isInQueue(env) }"
-            @click="toggleEnvironment(env)"
-          >
+        <div class="env-groups-container">
+          <template v-for="group in groupedEnvironments" :key="group.type">
+            <div class="env-type-group">
+              <div class="env-type-header">
+                <span class="env-type-title">{{ group.type }}</span>
+                <span class="env-type-count">{{ group.environments.length }}</span>
+              </div>
+              <div class="environments-grid">
+                <div 
+                  v-for="env in group.environments" 
+                  :key="env.id" 
+                  class="env-card"
+                  :class="{ occupied: env.occupied, mine: env.occupiedBy === currentUser, queued: isInQueue(env) }"
+                  @click="toggleEnvironment(env)"
+                >
             <div class="env-status-dot" :class="env.occupied ? 'occupied' : 'free'"></div>
             <div class="env-name">{{ env.name }}</div>
             
@@ -298,6 +305,9 @@
             
             <div v-if="env.occupiedAt" class="env-time">{{ formatTime(env.occupiedAt) }}</div>
           </div>
+          </div>
+            </div>
+          </template>
         </div>
 
         <div class="history-panel">
@@ -351,6 +361,12 @@
               placeholder="环境名称（如: 25151）"
               class="input-field"
             />
+            <input 
+              type="text" 
+              v-model="newEnvType" 
+              placeholder="环境类型（如: RoCE, ETH, IB）"
+              class="input-field"
+            />
             <textarea 
               v-model="newEnvDesc" 
               placeholder="备注信息（支持换行）"
@@ -364,6 +380,7 @@
             <div v-for="env in roceEnvironments" :key="env.id" class="env-item">
               <div class="env-item-info">
                 <span class="env-item-name">{{ env.name }}</span>
+                <span v-if="env.type" class="env-item-type">{{ env.type }}</span>
                 <span class="env-item-desc">{{ truncateFirstLine(env.description) }}</span>
               </div>
               <div class="env-item-actions">
@@ -390,6 +407,12 @@
               type="text" 
               v-model="editEnvName" 
               placeholder="环境名称"
+              class="input-field"
+            />
+            <input 
+              type="text" 
+              v-model="editEnvType" 
+              placeholder="环境类型（如: RoCE, ETH, IB）"
               class="input-field"
             />
             <textarea 
@@ -458,6 +481,7 @@ const roceEnvironments = ref([])
 const showEditModal = ref(false)
 const newEnvName = ref('')
 const newEnvDesc = ref('')
+const newEnvType = ref('')
 const selectedHistoryEnv = ref('')
 const historyData = ref([])
 
@@ -466,6 +490,7 @@ const showEditEnvModal = ref(false)
 const editEnvId = ref(null)
 const editEnvName = ref('')
 const editEnvDesc = ref('')
+const editEnvType = ref('')
 
 // Toast 通知状态
 const toast = ref({
@@ -495,6 +520,25 @@ const generatedCommand = computed(() => {
 
 const canSubmit = computed(() => {
   return selectedEnv.value && buildVersion.value
+})
+
+// 按环境类型分组
+const groupedEnvironments = computed(() => {
+  const groups = {}
+  for (const env of roceEnvironments.value) {
+    const type = env.type || '未分类'
+    if (!groups[type]) {
+      groups[type] = []
+    }
+    groups[type].push(env)
+  }
+  // 按组名排序，"未分类"放最后
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === '未分类') return 1
+    if (b === '未分类') return -1
+    return a.localeCompare(b)
+  })
+  return sortedKeys.map(type => ({ type, environments: groups[type] }))
 })
 
 const last7Days = computed(() => {
@@ -804,13 +848,15 @@ async function addEnvironment() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: newEnvName.value,
-        description: newEnvDesc.value
+        description: newEnvDesc.value,
+        type: newEnvType.value
       })
     })
     const data = await response.json()
     if (data.success) {
       newEnvName.value = ''
       newEnvDesc.value = ''
+      newEnvType.value = ''
       await loadEnvironments()
     }
   } catch (error) {
@@ -836,6 +882,7 @@ function openEditEnvModal(env) {
   editEnvId.value = env.id
   editEnvName.value = env.name
   editEnvDesc.value = env.description || ''
+  editEnvType.value = env.type || ''
   showEditEnvModal.value = true
 }
 
@@ -852,7 +899,8 @@ async function updateEnvironment() {
       body: JSON.stringify({
         id: editEnvId.value,
         name: editEnvName.value.trim(),
-        description: editEnvDesc.value.trim()
+        description: editEnvDesc.value.trim(),
+        type: editEnvType.value.trim()
       })
     })
     
@@ -1074,6 +1122,63 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
+}
+
+.env-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.env-type-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.env-type-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(138, 43, 226, 0.08) 100%);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.env-type-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.6) 0%, rgba(138, 43, 226, 0.6) 100%);
+}
+
+.env-type-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.env-type-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
 .env-card {
@@ -1576,6 +1681,19 @@ onMounted(() => {
 .env-item-name {
   font-weight: 600;
   color: var(--primary-color);
+}
+
+.env-item-type {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(0, 212, 255, 0.9);
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .env-item-desc {

@@ -75,7 +75,7 @@ EXECUTE_MAX_BUFFER = int(os.environ.get('EXECUTE_MAX_BUFFER', str(1024 * 1024 * 
 
 W3_VERIFY_CLI_PATH = os.environ.get(
     'W3_VERIFY_CLI_PATH', 
-    str(BASE_DIR.parent / 'w3-verify' / 'src' / 'cli.js')
+    str(BASE_DIR / 'w3-verify' / 'src' / 'cli.js')
 )
 W3_VERIFY_TIMEOUT = int(os.environ.get('W3_VERIFY_TIMEOUT', '20'))
 

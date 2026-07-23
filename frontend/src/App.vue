@@ -355,7 +355,7 @@
               v-model="newEnvDesc" 
               placeholder="备注信息（支持换行）"
               class="input-field textarea-field"
-              rows="3"
+              rows="5"
             ></textarea>
             <button class="submit-button" @click="addEnvironment">添加环境</button>
           </div>
@@ -364,7 +364,7 @@
             <div v-for="env in roceEnvironments" :key="env.id" class="env-item">
               <div class="env-item-info">
                 <span class="env-item-name">{{ env.name }}</span>
-                <span class="env-item-desc">{{ env.description }}</span>
+                <span class="env-item-desc">{{ truncateFirstLine(env.description) }}</span>
               </div>
               <div class="env-item-actions">
                 <button class="edit-env-button" @click="openEditEnvModal(env)">编辑</button>
@@ -396,7 +396,7 @@
               v-model="editEnvDesc" 
               placeholder="备注信息（支持换行）"
               class="input-field textarea-field"
-              rows="3"
+              rows="8"
             ></textarea>
             <div class="form-actions">
               <button class="cancel-button" @click="showEditEnvModal = false">取消</button>
@@ -712,6 +712,26 @@ function isTextOverflow(text, maxLines = 3, maxCharsPerLine = 50) {
   }
   
   return false
+}
+
+// 截取第一行的前30个字符（用于环境列表显示）
+function truncateFirstLine(text, maxChars = 30) {
+  if (!text) return ''
+  
+  // 获取第一行
+  const firstLine = text.split('\n')[0]
+  
+  // 如果第一行超过最大字符数，截取并添加省略号
+  if (firstLine.length > maxChars) {
+    return firstLine.substring(0, maxChars) + '...'
+  }
+  
+  // 如果有多行，在第一行末尾添加省略号
+  if (text.includes('\n')) {
+    return firstLine + '...'
+  }
+  
+  return firstLine
 }
 
 // 复制文本到剪贴板
@@ -1482,8 +1502,8 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
+  max-width: 700px;
+  max-height: 85vh;
   overflow-y: auto;
 }
 
@@ -1568,9 +1588,10 @@ onMounted(() => {
 
 .textarea-field {
   resize: vertical;
-  min-height: 80px;
+  min-height: 150px;
   font-family: inherit;
   line-height: 1.5;
+  width: 100%;
 }
 
 .delete-button {

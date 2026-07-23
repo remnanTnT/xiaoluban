@@ -244,6 +244,75 @@ def remove_environment(request):
         }, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_environment(request):
+    """更新环境信息"""
+    import json
+    from .models import Environment
+    
+    try:
+        data = json.loads(request.body)
+        env_id = data.get('id')
+        new_name = data.get('name', '').strip()
+        new_description = data.get('description', '')
+        
+        if not env_id:
+            return JsonResponse({
+                'success': False,
+                'error': '环境ID不能为空'
+            }, status=400)
+        
+        if not new_name:
+            return JsonResponse({
+                'success': False,
+                'error': '环境名称不能为空'
+            }, status=400)
+        
+        try:
+            env = Environment.objects.get(id=env_id)
+        except Environment.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'环境ID {env_id} 不存在'
+            }, status=404)
+        
+        # 检查新名称是否与其他环境冲突
+        if new_name != env.name:
+            existing = Environment.objects.filter(name=new_name).exclude(id=env_id).first()
+            if existing:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'环境名称 "{new_name}" 已存在'
+                }, status=400)
+        
+        old_name = env.name
+        env.name = new_name
+        env.description = new_description
+        env.save()
+        
+        logger.info(f"更新环境: {old_name} -> {new_name}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': '环境信息已更新',
+            'environment': {
+                'id': env.id,
+                'name': env.name,
+                'description': env.description,
+                'status': env.status,
+                'occupant': env.occupant
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"更新环境失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
 @require_http_methods(["GET"])
 def get_history(request):
     """获取历史记录"""

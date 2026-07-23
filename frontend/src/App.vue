@@ -226,7 +226,7 @@
             <!-- 占用状态显示 -->
             <div v-if="env.occupied" class="env-user">
               <span v-if="env.occupiedBy === currentUser" class="env-status-mine">正在占用</span>
-              <span v-else>占用: {{ env.occupiedBy }}</span>
+              <span v-else>当前占用人: {{ env.occupiedBy }}</span>
             </div>
             
             <!-- 排队信息显示 -->
@@ -336,7 +336,41 @@
                 <span class="env-item-name">{{ env.name }}</span>
                 <span class="env-item-desc">{{ env.description }}</span>
               </div>
-              <button class="delete-button" @click="deleteEnvironment(env.id)">删除</button>
+              <div class="env-item-actions">
+                <button class="edit-env-button" @click="openEditEnvModal(env)">编辑</button>
+                <button class="delete-button" @click="deleteEnvironment(env.id)">删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 编辑环境信息模态框 -->
+    <div v-if="showEditEnvModal" class="modal-overlay" @click.self="showEditEnvModal = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>编辑环境信息</h3>
+          <button class="close-button" @click="showEditEnvModal = false">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="add-form">
+            <input 
+              type="text" 
+              v-model="editEnvName" 
+              placeholder="环境名称"
+              class="input-field"
+            />
+            <input 
+              type="text" 
+              v-model="editEnvDesc" 
+              placeholder="备注信息"
+              class="input-field"
+            />
+            <div class="form-actions">
+              <button class="cancel-button" @click="showEditEnvModal = false">取消</button>
+              <button class="submit-button" @click="updateEnvironment">保存</button>
             </div>
           </div>
         </div>
@@ -372,6 +406,12 @@ const newEnvName = ref('')
 const newEnvDesc = ref('')
 const selectedHistoryEnv = ref('')
 const historyData = ref([])
+
+// 编辑环境信息相关状态
+const showEditEnvModal = ref(false)
+const editEnvId = ref(null)
+const editEnvName = ref('')
+const editEnvDesc = ref('')
 
 const environments = ['25151', '25152', '2516', '2503', '2514', '2511', '2599', '2521']
 
@@ -640,6 +680,45 @@ async function deleteEnvironment(id) {
     }
   } catch (error) {
     console.error('删除环境失败:', error)
+  }
+}
+
+function openEditEnvModal(env) {
+  editEnvId.value = env.id
+  editEnvName.value = env.name
+  editEnvDesc.value = env.description || ''
+  showEditEnvModal.value = true
+}
+
+async function updateEnvironment() {
+  if (!editEnvName.value.trim()) {
+    alert('环境名称不能为空')
+    return
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/environments/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editEnvId.value,
+        name: editEnvName.value.trim(),
+        description: editEnvDesc.value.trim()
+      })
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      showEditEnvModal.value = false
+      await loadEnvironments()
+      alert('环境信息已更新')
+    } else {
+      alert('更新失败: ' + (data.error || '未知错误'))
+    }
+  } catch (error) {
+    console.error('更新环境失败:', error)
+    alert('更新环境失败: ' + error.message)
   }
 }
 
@@ -914,33 +993,84 @@ onMounted(() => {
   display: none;
   position: absolute;
   bottom: 100%;
-  left: 0;
-  background: rgba(0, 0, 0, 0.95);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
+  backdrop-filter: blur(10px);
   color: white;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border-radius: 12px;
   font-size: 0.85rem;
-  min-width: 150px;
-  max-width: 250px;
+  min-width: 180px;
+  max-width: 280px;
   z-index: 100;
-  margin-bottom: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 12px;
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.queue-tooltip::before {
+  content: '排队用户';
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(0, 212, 255, 0.9);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .queue-tooltip::after {
   content: '';
   position: absolute;
   top: 100%;
-  left: 20px;
-  border-width: 6px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.95) transparent transparent transparent;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(0, 212, 255, 0.3);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .queue-user-item {
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.queue-user-item:last-child {
+  border-bottom: none;
+}
+
+.queue-user-item::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  box-shadow: 0 0 8px var(--primary-color);
+  flex-shrink: 0;
 }
 
 .queue-user-item:last-child {
@@ -1196,6 +1326,50 @@ onMounted(() => {
 .delete-button:hover {
   background: #ff4757;
   color: white;
+}
+
+.env-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-env-button {
+  padding: 6px 16px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.edit-env-button:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancel-button {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary);
 }
 
 @media (max-width: 1024px) {

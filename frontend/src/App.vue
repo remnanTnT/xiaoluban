@@ -263,7 +263,7 @@
             <!-- 占用状态显示 -->
             <div v-if="env.occupied" class="env-user">
               <span v-if="env.occupiedBy === currentUser" class="env-status-mine">正在占用</span>
-              <span v-else>当前占用人: {{ env.occupiedBy }}</span>
+              <span v-else class="env-status-occupied">当前占用人: {{ env.occupiedBy }}</span>
             </div>
             
             <!-- 排队信息显示 -->
@@ -364,12 +364,12 @@
             <input 
               type="text" 
               v-model="newEnvType" 
-              placeholder="环境类型（如: RoCE, ETH, IB）"
+              placeholder="环境类型（如: EVB1, EVB2）"
               class="input-field"
             />
             <textarea 
               v-model="newEnvDesc" 
-              placeholder="备注信息（支持换行）"
+              placeholder="备注信息"
               class="input-field textarea-field"
               rows="5"
             ></textarea>
@@ -412,12 +412,12 @@
             <input 
               type="text" 
               v-model="editEnvType" 
-              placeholder="环境类型（如: RoCE, ETH, IB）"
+              placeholder="环境类型（如: EVB1, EVB2）"
               class="input-field"
             />
             <textarea 
               v-model="editEnvDesc" 
-              placeholder="备注信息（支持换行）"
+              placeholder="备注信息"
               class="input-field textarea-field"
               rows="8"
             ></textarea>
@@ -1342,6 +1342,16 @@ onMounted(() => {
 .env-status-mine {
   color: var(--success-color);
   font-weight: 600;
+}
+
+.env-status-occupied {
+  color: #ff6b6b;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+  background: linear-gradient(90deg, rgba(255, 71, 87, 0.1) 0%, transparent 100%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .env-queue {

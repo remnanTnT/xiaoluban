@@ -414,3 +414,88 @@ def get_environment_usage(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def login(request):
+    import json
+    import shutil
+    from pathlib import Path
+    
+    try:
+        data = json.loads(request.body)
+        uid = data.get('uid', '').strip()
+        password = data.get('password', '')
+        
+        if not uid or not password:
+            return JsonResponse({
+                'success': False,
+                'error': '账号和密码不能为空'
+            }, status=400)
+        
+        cli_path = settings.W3_VERIFY_CLI_PATH
+        if not Path(cli_path).exists():
+            logger.error(f"w3-verify CLI 不存在: {cli_path}")
+            return JsonResponse({
+                'success': False,
+                'error': 'W3 校验服务不可用'
+            }, status=503)
+        
+        if not shutil.which('node'):
+            logger.error("Node.js 未安装")
+            return JsonResponse({
+                'success': False,
+                'error': 'W3 校验服务不可用'
+            }, status=503)
+        
+        try:
+            result = subprocess.run(
+                ['node', cli_path, '--uid', uid],
+                input=password,
+                capture_output=True,
+                text=True,
+                timeout=settings.W3_VERIFY_TIMEOUT
+            )
+        except subprocess.TimeoutExpired:
+            logger.warning(f"登录校验超时: uid={uid}")
+            return JsonResponse({
+                'success': False,
+                'error': '登录校验超时'
+            }, status=408)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            try:
+                verify_result = json.loads(result.stdout.strip())
+                if verify_result.get('success'):
+                    logger.info(f"登录成功: uid={uid}")
+                    return JsonResponse({
+                        'success': True,
+                        'uid': uid
+                    })
+                else:
+                    error_msg = verify_result.get('error', '账号或密码错误')
+                    logger.warning(f"登录失败: uid={uid}, error={error_msg}")
+                    return JsonResponse({
+                        'success': False,
+                        'error': '账号或密码错误'
+                    }, status=401)
+            except json.JSONDecodeError:
+                logger.error(f"w3-verify 输出解析失败: {result.stdout}")
+                return JsonResponse({
+                    'success': False,
+                    'error': '登录校验失败'
+                }, status=500)
+        else:
+            logger.warning(f"登录失败: uid={uid}, returncode={result.returncode}")
+            return JsonResponse({
+                'success': False,
+                'error': '账号或密码错误'
+            }, status=401)
+        
+    except Exception as e:
+        logger.error(f"登录异常: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

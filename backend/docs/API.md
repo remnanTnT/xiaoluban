@@ -6,7 +6,37 @@
 
 ## API 端点
 
-### 1. 执行命令
+### 1. 登录认证
+
+**POST** `/api/login`
+
+通过 W3 账号密码校验进行登录。
+
+**请求体：**
+```json
+{
+  "uid": "W3账号",
+  "password": "密码"
+}
+```
+
+**成功响应（200）：**
+```json
+{
+  "success": true,
+  "uid": "z00123456"
+}
+```
+
+**失败响应：**
+- 缺少参数 → 400 `{ "success": false, "error": "账号和密码不能为空" }`
+- 凭据错误 → 401 `{ "success": false, "error": "账号或密码错误" }`
+- 超时 → 408 `{ "success": false, "error": "登录校验超时" }`
+- 服务不可用 → 503 `{ "success": false, "error": "W3 校验服务不可用" }`
+
+---
+
+### 2. 执行命令
 
 **POST** `/api/execute`
 

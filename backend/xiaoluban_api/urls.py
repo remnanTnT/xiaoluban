@@ -5,6 +5,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # 登录认证
+    path('login', views.login, name='login'),
+    
     # 命令执行
     path('execute', views.execute_command, name='execute'),
     

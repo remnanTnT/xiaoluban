@@ -110,23 +110,48 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"  ✗ 失败: {e}"))
     
-    def generate_ddl(self):
-        """生成修复 DDL 语句"""
-        ddl = []
+def generate_ddl(self):
+    """生成修复 DDL 语句"""
+    ddl = []
+    
+    for issue in self.schema_issues:
+        if "不存在" in issue:
+            parts = issue.split()
+            table_name = parts[1]
+            ddl.append(f'CREATE TABLE "{table_name}" (id BIGSERIAL PRIMARY KEY);')
         
-        for issue in self.schema_issues:
-            if "不存在" in issue:
-                # 创建表
-                parts = issue.split()
-                table_name = parts[1]
-                ddl.append(f'CREATE TABLE "{table_name}" (id BIGSERIAL PRIMARY KEY);')
-            
-            elif "缺少列" in issue:
-                # 添加列（需要根据模型字段类型确定）
-                parts = issue.split()
-                table_name = parts[1]
-                column_name = parts[3]
-                # 使用双引号括起来避免保留关键字冲突
-                ddl.append(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" TEXT;')
-        
-        return ddl
+        elif "缺少列" in issue:
+            parts = issue.split()
+            table_name = parts[1]
+            column_name = parts[3]
+            column_type = self.get_column_type(table_name, column_name)
+            ddl.append(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" {column_type};')
+    
+    return ddl
+
+def get_column_type(self, table_name, column_name):
+    """根据模型字段类型返回 SQL 类型"""
+    from django.apps import apps
+    
+    type_map = {
+        'BooleanField': 'BOOLEAN',
+        'CharField': 'VARCHAR(100)',
+        'TextField': 'TEXT',
+        'IntegerField': 'INTEGER',
+        'BigIntegerField': 'BIGINT',
+        'DateTimeField': 'TIMESTAMP',
+        'AutoField': 'SERIAL',
+        'BigAutoField': 'BIGSERIAL',
+    }
+    
+    for model in apps.get_models():
+        if model._meta.db_table == table_name:
+            for field in model._meta.get_fields():
+                if field.column == column_name and field.concrete:
+                    field_type = type(field).__name__
+                    if field_type in type_map:
+                        return type_map[field_type]
+                    if hasattr(field, 'max_length') and field.max_length:
+                        return f'VARCHAR({field.max_length})'
+    
+    return 'TEXT'

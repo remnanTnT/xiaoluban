@@ -232,12 +232,26 @@
             <!-- 排队信息显示 -->
             <template v-if="env.queued_users && env.queued_users.length > 0">
               <!-- 自己占用时，显示排队人数 -->
-              <div v-if="env.occupiedBy === currentUser" class="env-queue">
-                排队人数: {{ env.queued_users.length }}人
+              <div v-if="env.occupiedBy === currentUser" class="env-queue queue-info-wrapper">
+                <span class="queue-info-text">
+                  排队人数: {{ env.queued_users.length }}人
+                  <span class="queue-tooltip">
+                    <div v-for="(user, index) in env.queued_users" :key="index" class="queue-user-item">
+                      {{ index + 1 }}. {{ user }}
+                    </div>
+                  </span>
+                </span>
               </div>
               <!-- 自己在排队时，显示前面还有几位 -->
-              <div v-else-if="isInQueue(env)" class="env-queue-mine">
-                前面还有 {{ getQueuePosition(env) }} 位
+              <div v-else-if="isInQueue(env)" class="env-queue-mine queue-info-wrapper">
+                <span class="queue-info-text">
+                  前面还有 {{ getQueuePosition(env) }} 位
+                  <span class="queue-tooltip">
+                    <div v-for="(user, index) in env.queued_users" :key="index" class="queue-user-item">
+                      {{ index + 1 }}. {{ user }}
+                    </div>
+                  </span>
+                </span>
               </div>
               <!-- 其他人占用，显示排队列表 -->
               <div v-else class="env-queue queue-info-wrapper">

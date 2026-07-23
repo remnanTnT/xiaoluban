@@ -223,6 +223,9 @@
             <div class="env-name">{{ env.name }}</div>
             <div class="env-description">{{ env.description || '无备注' }}</div>
             <div v-if="env.occupied" class="env-user">占用: {{ env.occupiedBy }}</div>
+            <div v-if="env.queued_users && env.queued_users.length > 0" class="env-queue">
+              排队: {{ env.queued_users.join(', ') }}
+            </div>
             <div v-if="env.occupiedAt" class="env-time">{{ formatTime(env.occupiedAt) }}</div>
           </div>
         </div>
@@ -825,6 +828,12 @@ onMounted(() => {
 .env-user {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+.env-queue {
+  font-size: 0.85rem;
+  color: #ffa502;
+  margin-top: 4px;
 }
 
 .env-time {

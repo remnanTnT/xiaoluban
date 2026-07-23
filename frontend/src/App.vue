@@ -1,9 +1,61 @@
 <template>
   <div class="app-container">
-    <h1 class="app-title">小鲁班自验证工具</h1>
-    <p class="app-subtitle">自动化测试与部署平台</p>
+    <div v-if="!isLoggedIn" class="login-page">
+      <h1 class="app-title">小鲁班自验证工具</h1>
+      <p class="app-subtitle">自动化测试与部署平台</p>
+      
+      <div class="login-panel">
+        <div class="panel-title">W3 账号登录</div>
+        
+        <div class="param-group">
+          <label class="param-label">W3 账号</label>
+          <input 
+            type="text" 
+            class="input-field"
+            v-model="loginUid"
+            placeholder="请输入 W3 账号"
+            @keyup.enter="handleLogin"
+          />
+        </div>
+        
+        <div class="param-group">
+          <label class="param-label">密码</label>
+          <input 
+            type="password" 
+            class="input-field"
+            v-model="loginPassword"
+            placeholder="请输入密码"
+            @keyup.enter="handleLogin"
+          />
+        </div>
+        
+        <button 
+          class="submit-button" 
+          @click="handleLogin"
+          :disabled="isLoggingIn || !loginUid || !loginPassword"
+        >
+          {{ isLoggingIn ? '登录中...' : '登录' }}
+        </button>
+        
+        <div v-if="loginError" class="result-message error">
+          {{ loginError }}
+        </div>
+      </div>
+    </div>
     
-    <div class="tab-container">
+    <template v-else>
+      <div class="header-bar">
+        <div class="header-left">
+          <h1 class="app-title">小鲁班自验证工具</h1>
+          <p class="app-subtitle">自动化测试与部署平台</p>
+        </div>
+        <div class="header-right">
+          <span class="user-info">当前用户: {{ currentUser }}</span>
+          <button class="logout-button" @click="handleLogout">退出登录</button>
+        </div>
+      </div>
+      
+      <div class="tab-container">
       <button 
         class="tab-button"
         :class="{ active: activeTab === 'tool' }"
@@ -246,7 +298,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -263,7 +315,13 @@ const selectedMode = ref('')
 const resultMessage = ref('')
 const resultType = ref('')
 
-const currentUser = ref('user_' + Math.random().toString(36).substr(2, 9))
+const isLoggedIn = ref(!!localStorage.getItem('xiaoluban_user'))
+const currentUser = ref(localStorage.getItem('xiaoluban_user') || '')
+const loginUid = ref('')
+const loginPassword = ref('')
+const loginError = ref('')
+const isLoggingIn = ref(false)
+
 const roceEnvironments = ref([])
 const showEditModal = ref(false)
 const newEnvName = ref('')
@@ -512,6 +570,49 @@ async function deleteEnvironment(id) {
   } catch (error) {
     console.error('删除环境失败:', error)
   }
+}
+
+async function handleLogin() {
+  if (!loginUid.value || !loginPassword.value) {
+    loginError.value = '请输入账号和密码'
+    return
+  }
+  
+  isLoggingIn.value = true
+  loginError.value = ''
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: loginUid.value,
+        password: loginPassword.value
+      })
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      currentUser.value = data.uid
+      isLoggedIn.value = true
+      localStorage.setItem('xiaoluban_user', data.uid)
+      loginUid.value = ''
+      loginPassword.value = ''
+    } else {
+      loginError.value = data.error || '登录失败'
+    }
+  } catch (error) {
+    loginError.value = '网络错误，请稍后重试'
+  } finally {
+    isLoggingIn.value = false
+  }
+}
+
+function handleLogout() {
+  currentUser.value = ''
+  isLoggedIn.value = false
+  localStorage.removeItem('xiaoluban_user')
 }
 
 async function loadHistory() {

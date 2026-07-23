@@ -56,43 +56,42 @@
       </div>
       
       <div class="tab-container">
-      <button 
-        class="tab-button"
-        :class="{ active: activeTab === 'roce' }"
-        @click="activeTab = 'roce'"
-      >
-        RoCE环境排队
-      </button>
-      <button 
-        class="tab-button"
-        :class="{ active: activeTab === 'tool' }"
-        @click="activeTab = 'tool'"
-      >
-        小鲁班自验证
-      </button>
-    </div>
-
-    <div v-if="activeTab === 'tool'" class="tool-page">
-      <div class="coming-soon-container">
-        <div class="coming-soon-card">
-          <div class="coming-soon-icon">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2"/>
-              <path d="M12 2a10 10 0 0 1 10 10"/>
-              <path d="M12 2a10 10 0 0 0-10 10" opacity="0.5"/>
-            </svg>
-          </div>
-          <h2 class="coming-soon-title">功能暂未开放</h2>
-          <p class="coming-soon-subtitle">敬请期待！</p>
-          <div class="coming-soon-divider"></div>
-          <p class="coming-soon-desc">小鲁班自验证功能正在开发中，即将上线</p>
-        </div>
-</div>
+        <button 
+          class="tab-button"
+          :class="{ active: activeTab === 'roce' }"
+          @click="activeTab = 'roce'"
+        >
+          RoCE环境排队
+        </button>
+        <button 
+          class="tab-button"
+          :class="{ active: activeTab === 'tool' }"
+          @click="activeTab = 'tool'"
+        >
+          小鲁班自验证
+        </button>
       </div>
-    </div>
 
-    <div v-else-if="activeTab === 'roce'" class="roce-page">
+      <div v-if="activeTab === 'tool'" class="tool-page">
+        <div class="coming-soon-container">
+          <div class="coming-soon-card">
+            <div class="coming-soon-icon">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+                <path d="M12 2a10 10 0 0 1 10 10"/>
+                <path d="M12 2a10 10 0 0 0-10 10" opacity="0.5"/>
+              </svg>
+            </div>
+            <h2 class="coming-soon-title">功能暂未开放</h2>
+            <p class="coming-soon-subtitle">敬请期待！</p>
+            <div class="coming-soon-divider"></div>
+            <p class="coming-soon-desc">小鲁班自验证功能正在开发中，即将上线</p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="activeTab === 'roce'" class="roce-page">
       <div class="roce-header">
         <button class="edit-button" @click="showEditModal = true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

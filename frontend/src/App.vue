@@ -321,12 +321,12 @@
               placeholder="环境名称（如: 25151）"
               class="input-field"
             />
-            <input 
-              type="text" 
+            <textarea 
               v-model="newEnvDesc" 
-              placeholder="备注信息"
-              class="input-field"
-            />
+              placeholder="备注信息（支持换行）"
+              class="input-field textarea-field"
+              rows="3"
+            ></textarea>
             <button class="submit-button" @click="addEnvironment">添加环境</button>
           </div>
 
@@ -362,18 +362,42 @@
               placeholder="环境名称"
               class="input-field"
             />
-            <input 
-              type="text" 
+            <textarea 
               v-model="editEnvDesc" 
-              placeholder="备注信息"
-              class="input-field"
-            />
+              placeholder="备注信息（支持换行）"
+              class="input-field textarea-field"
+              rows="3"
+            ></textarea>
             <div class="form-actions">
               <button class="cancel-button" @click="showEditEnvModal = false">取消</button>
               <button class="submit-button" @click="updateEnvironment">保存</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    
+    <!-- Toast 通知组件 -->
+    <div v-if="toast.show" class="toast-container">
+      <div :class="['toast', `toast-${toast.type}`]">
+        <div class="toast-icon">
+          <svg v-if="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <svg v-else-if="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="toast-content">{{ toast.message }}</div>
+        <button class="toast-close" @click="toast.show = false">×</button>
       </div>
     </div>
     </template>
@@ -412,6 +436,13 @@ const showEditEnvModal = ref(false)
 const editEnvId = ref(null)
 const editEnvName = ref('')
 const editEnvDesc = ref('')
+
+// Toast 通知状态
+const toast = ref({
+  show: false,
+  message: '',
+  type: 'info' // success, error, info
+})
 
 const environments = ['25151', '25152', '2516', '2503', '2514', '2511', '2599', '2521']
 
@@ -456,6 +487,20 @@ function selectAction(action) {
     buildVersion.value = ''
     selectedMode.value = ''
   }
+}
+
+// Toast 通知函数
+function showToast(message, type = 'info') {
+  toast.value = {
+    show: true,
+    message,
+    type
+  }
+  
+  // 3秒后自动关闭
+  setTimeout(() => {
+    toast.value.show = false
+  }, 3000)
 }
 
 async function executeCommand() {
@@ -614,8 +659,9 @@ async function toggleEnvironment(env) {
         if (selectedHistoryEnv.value === env.name) {
           await loadHistory()
         }
+        showToast('环境已成功释放', 'success')
       } else {
-        alert('释放失败: ' + data.error)
+        showToast('释放失败: ' + data.error, 'error')
       }
     } else {
       // 其他情况都调用 occupy 接口，后端会处理排队逻辑
@@ -632,16 +678,21 @@ async function toggleEnvironment(env) {
         }
         // 显示操作结果
         if (data.action === 'queued') {
-          alert(`已加入排队，当前排队位置: 第 ${data.queue_position} 位`)
+          showToast(`已加入排队，当前排队位置: 第 ${data.queue_position} 位`, 'info')
         } else if (data.action === 'queue_cancelled') {
-          alert('已取消排队')
+          showToast('已取消排队', 'info')
+        } else if (data.action === 'occupied') {
+          showToast('环境占用成功', 'success')
         }
       } else {
-        alert('操作失败: ' + data.error)
+        showToast('操作失败: ' + data.error, 'error')
       }
     }
   } catch (error) {
     console.error('操作失败:', error)
+    showToast('操作失败: ' + error.message, 'error')
+  }
+}
     alert('操作失败: ' + error.message)
   }
 }
@@ -692,7 +743,7 @@ function openEditEnvModal(env) {
 
 async function updateEnvironment() {
   if (!editEnvName.value.trim()) {
-    alert('环境名称不能为空')
+    showToast('环境名称不能为空', 'error')
     return
   }
   
@@ -712,13 +763,13 @@ async function updateEnvironment() {
     if (data.success) {
       showEditEnvModal.value = false
       await loadEnvironments()
-      alert('环境信息已更新')
+      showToast('环境信息已更新', 'success')
     } else {
-      alert('更新失败: ' + (data.error || '未知错误'))
+      showToast('更新失败: ' + (data.error || '未知错误'), 'error')
     }
   } catch (error) {
     console.error('更新环境失败:', error)
-    alert('更新环境失败: ' + error.message)
+    showToast('更新环境失败: ' + error.message, 'error')
   }
 }
 
@@ -957,6 +1008,9 @@ onMounted(() => {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.4;
 }
 
 .env-user {
@@ -1311,6 +1365,16 @@ onMounted(() => {
 .env-item-desc {
   font-size: 0.85rem;
   color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.3;
+}
+
+.textarea-field {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 .delete-button {
@@ -1370,6 +1434,104 @@ onMounted(() => {
 .cancel-button:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--text-secondary);
+}
+
+/* Toast 通知样式 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: white;
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.toast-success {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 136, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.toast-error {
+  border-color: rgba(255, 71, 87, 0.5);
+  box-shadow: 
+    0 0 20px rgba(255, 71, 87, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-success .toast-icon {
+  color: var(--success-color);
+}
+
+.toast-error .toast-icon {
+  color: #ff4757;
+}
+
+.toast-content {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 @media (max-width: 1024px) {

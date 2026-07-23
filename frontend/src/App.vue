@@ -58,17 +58,17 @@
       <div class="tab-container">
       <button 
         class="tab-button"
-        :class="{ active: activeTab === 'tool' }"
-        @click="activeTab = 'tool'"
-      >
-        工具操作
-      </button>
-      <button 
-        class="tab-button"
         :class="{ active: activeTab === 'roce' }"
         @click="activeTab = 'roce'"
       >
         RoCE环境排队
+      </button>
+      <button 
+        class="tab-button"
+        :class="{ active: activeTab === 'tool' }"
+        @click="activeTab = 'tool'"
+      >
+        工具操作
       </button>
     </div>
 
@@ -308,7 +308,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-const activeTab = ref('tool')
+const activeTab = ref('roce')
 const currentAction = ref('')
 const selectedEnv = ref('')
 const buildVersion = ref('')

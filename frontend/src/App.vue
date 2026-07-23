@@ -221,7 +221,37 @@
           >
             <div class="env-status-dot" :class="env.occupied ? 'occupied' : 'free'"></div>
             <div class="env-name">{{ env.name }}</div>
-            <div class="env-description">{{ env.description || '无备注' }}</div>
+            
+            <!-- 备注信息显示 -->
+            <div v-if="env.description" class="env-description-wrapper">
+              <div 
+                class="env-description"
+                :class="{ 'has-more': isTextOverflow(env.description) }"
+              >
+                {{ truncateText(env.description) }}
+                
+                <!-- 备注信息tooltip -->
+                <div v-if="isTextOverflow(env.description)" class="desc-tooltip">
+                  <div class="desc-tooltip-header">
+                    <span>完整备注信息</span>
+                  </div>
+                  <div class="desc-tooltip-content">{{ env.description }}</div>
+                </div>
+              </div>
+              
+              <!-- 复制按钮 -->
+              <button 
+                class="copy-desc-button"
+                @click.stop="copyToClipboard(env.description)"
+                title="复制备注"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+            <div v-else class="env-description">无备注</div>
             
             <!-- 占用状态显示 -->
             <div v-if="env.occupied" class="env-user">
@@ -644,6 +674,32 @@ function getQueuePosition(env) {
   return index >= 0 ? index : 0
 }
 
+// 截取文本前3行
+function truncateText(text, maxLines = 3) {
+  if (!text) return ''
+  const lines = text.split('\n')
+  if (lines.length <= maxLines) return text
+  return lines.slice(0, maxLines).join('\n') + '...'
+}
+
+// 判断文本是否超过指定行数
+function isTextOverflow(text, maxLines = 3) {
+  if (!text) return false
+  const lines = text.split('\n')
+  return lines.length > maxLines
+}
+
+// 复制文本到剪贴板
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    showToast('备注信息已复制到剪贴板', 'success')
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast('复制失败，请手动复制', 'error')
+  }
+}
+
 async function toggleEnvironment(env) {
   try {
     // 如果环境被自己占用，释放
@@ -1008,6 +1064,101 @@ onMounted(() => {
   white-space: pre-wrap;
   word-wrap: break-word;
   line-height: 1.4;
+}
+
+.env-description-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.env-description-wrapper .env-description {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.env-description.has-more {
+  cursor: help;
+  position: relative;
+}
+
+.env-description.has-more::after {
+  content: '查看更多';
+  display: block;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.env-description:hover .desc-tooltip {
+  display: block;
+}
+
+.desc-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  z-index: 10;
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: tooltipFadeIn 0.2s ease-out;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.desc-tooltip-header {
+  font-size: 0.75rem;
+  color: rgba(0, 212, 255, 0.9);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.desc-tooltip-content {
+  font-size: 0.85rem;
+  color: white;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.copy-desc-button {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 6px;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.copy-desc-button:hover {
+  background: var(--primary-color);
+  color: white;
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.5);
 }
 
 .env-user {

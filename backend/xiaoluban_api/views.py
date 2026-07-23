@@ -86,9 +86,12 @@ def execute_command(request):
 def get_environments(request):
     """获取环境列表（只返回 is_used=True 的环境）"""
     from .models import Environment
+    from django.db.models import Q
     
     try:
-        environments = Environment.objects.filter(is_used=True).values(
+        environments = Environment.objects.filter(
+            Q(is_used=True) | Q(is_used__iexact='true') | Q(is_used__iexact='t')
+        ).values(
             'id', 'name', 'description', 'status', 'occupant', 
             'is_used', 'offline_time', 'created_at', 'updated_at'
         )

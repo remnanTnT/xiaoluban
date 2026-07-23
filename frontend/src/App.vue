@@ -508,6 +508,7 @@ async function loadEnvironments() {
 
 async function toggleEnvironment(env) {
   try {
+    // 如果环境被自己占用，释放
     if (env.occupied && env.occupiedBy === currentUser.value) {
       const response = await fetch(`${API_BASE}/api/environments/release`, {
         method: 'POST',
@@ -517,14 +518,14 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
-        // 刷新当前选中的历史记录
         if (selectedHistoryEnv.value === env.name) {
           await loadHistory()
         }
       } else {
         alert('释放失败: ' + data.error)
       }
-    } else if (!env.occupied) {
+    } else {
+      // 其他情况都调用 occupy 接口，后端会处理排队逻辑
       const response = await fetch(`${API_BASE}/api/environments/occupy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -533,15 +534,18 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
-        // 刷新当前选中的历史记录
         if (selectedHistoryEnv.value === env.name) {
           await loadHistory()
         }
+        // 显示操作结果
+        if (data.action === 'queued') {
+          alert(`已加入排队，当前排队位置: 第 ${data.queue_position} 位`)
+        } else if (data.action === 'queue_cancelled') {
+          alert('已取消排队')
+        }
       } else {
-        alert('占用失败: ' + data.error)
+        alert('操作失败: ' + data.error)
       }
-    } else {
-      alert(`环境已被 ${env.occupiedBy} 占用，无法操作`)
     }
   } catch (error) {
     console.error('操作失败:', error)

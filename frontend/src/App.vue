@@ -923,6 +923,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 科技感滚动条样式 - 全局样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.5) rgba(0, 0, 0, 0.1);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.6) 0%, rgba(138, 43, 226, 0.6) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.8) 0%, rgba(138, 43, 226, 0.8) 100%);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .app-container {
   width: 100%;
   max-width: 1400px;
@@ -1102,7 +1133,8 @@ onMounted(() => {
   position: absolute;
   bottom: 100%;
   left: 0;
-  right: 0;
+  min-width: 350px;
+  max-width: 500px;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 212, 255, 0.3);

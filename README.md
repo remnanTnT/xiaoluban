@@ -87,10 +87,21 @@ source venv/bin/activate
 # 安装依赖
 pip install -r requirements.txt
 
-# 配置数据库（确保 PostgreSQL 已运行）
+# 配置数据库环境变量
+# 测试环境（默认）
 export DB_NAME=xiaoluban
 export DB_USER=postgres
-export DB_PASSWORD=postgres
+export DB_PASSWORD=123456
+export DB_HOST=7.197.65.7
+export DB_PORT=5430
+
+# 或生产环境
+# export DB_HOST=7.197.65.7
+# export DB_PORT=5431
+
+# 或使用 .env 文件（推荐）
+cp .env.example .env
+# 编辑 .env 文件，修改数据库配置
 
 # 初始化数据库
 python manage.py check_db_schema --fix

@@ -517,6 +517,10 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
+        // 刷新当前选中的历史记录
+        if (selectedHistoryEnv.value === env.name) {
+          await loadHistory()
+        }
       } else {
         alert('释放失败: ' + data.error)
       }
@@ -529,6 +533,10 @@ async function toggleEnvironment(env) {
       const data = await response.json()
       if (data.success) {
         await loadEnvironments()
+        // 刷新当前选中的历史记录
+        if (selectedHistoryEnv.value === env.name) {
+          await loadHistory()
+        }
       } else {
         alert('占用失败: ' + data.error)
       }
@@ -828,6 +836,24 @@ onMounted(() => {
   padding: 24px;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
+}
+
+.history-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.history-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 3px;
+}
+
+.history-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
 }
 
 .env-select {

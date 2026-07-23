@@ -240,8 +240,15 @@
                 前面还有 {{ getQueuePosition(env) }} 位
               </div>
               <!-- 其他人占用，显示排队列表 -->
-              <div v-else class="env-queue">
-                排队: {{ env.queued_users.join(', ') }}
+              <div v-else class="env-queue queue-info-wrapper">
+                <span class="queue-info-text">
+                  排队: {{ env.queued_users.length }}人
+                  <span class="queue-tooltip">
+                    <div v-for="(user, index) in env.queued_users" :key="index" class="queue-user-item">
+                      {{ index + 1 }}. {{ user }}
+                    </div>
+                  </span>
+                </span>
               </div>
             </template>
             
@@ -873,6 +880,57 @@ onMounted(() => {
   font-size: 0.85rem;
   color: #ffa502;
   margin-top: 4px;
+}
+
+.queue-info-wrapper {
+  position: relative;
+}
+
+.queue-info-text {
+  cursor: help;
+  position: relative;
+  display: inline-block;
+}
+
+.queue-info-text:hover .queue-tooltip {
+  display: block;
+}
+
+.queue-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  min-width: 150px;
+  max-width: 250px;
+  z-index: 100;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.queue-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.95) transparent transparent transparent;
+}
+
+.queue-user-item {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.queue-user-item:last-child {
+  border-bottom: none;
 }
 
 .env-queue-mine {

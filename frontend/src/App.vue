@@ -262,7 +262,7 @@
         </div>
       </div>
     </div>
-
+    
     <div v-if="showEditModal" class="modal-overlay" @click.self="showEditModal = false">
       <div class="modal">
         <div class="modal-header">
@@ -298,6 +298,7 @@
           </div>
         </div>
       </div>
+    </div>
     </template>
   </div>
 </template>

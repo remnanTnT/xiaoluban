@@ -495,6 +495,11 @@ async function loadEnvironments() {
             occupiedBy: env.occupant || ''
           }))
       }
+      
+      // 默认选择第一个环境查看历史记录
+      if (!selectedHistoryEnv.value && roceEnvironments.value.length > 0) {
+        selectedHistoryEnv.value = roceEnvironments.value[0].name
+      }
     }
   } catch (error) {
     console.error('加载环境失败:', error)

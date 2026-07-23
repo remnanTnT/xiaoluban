@@ -68,134 +68,27 @@
         :class="{ active: activeTab === 'tool' }"
         @click="activeTab = 'tool'"
       >
-        工具操作
+        小鲁班自验证
       </button>
     </div>
 
     <div v-if="activeTab === 'tool'" class="tool-page">
-      <div class="button-group">
-        <button 
-          class="action-button"
-          :class="{ active: currentAction === 'upgrade' }"
-          @click="selectAction('upgrade')"
-        >
-          升级
-        </button>
-        <button 
-          class="action-button"
-          :class="{ active: currentAction === 'test' }"
-          @click="selectAction('test')"
-        >
-          测试
-        </button>
-        <button 
-          class="action-button"
-          :class="{ active: currentAction === 'reset' }"
-          @click="selectAction('reset')"
-        >
-          复位
-        </button>
-      </div>
-
-      <div v-if="currentAction" class="parameter-panel">
-        <div v-if="currentAction === 'upgrade'">
-          <div class="panel-title">升级参数配置</div>
-          
-          <div class="param-group">
-            <label class="param-label">选择环境</label>
-            <div class="env-grid">
-              <button
-                v-for="env in environments"
-                :key="env"
-                class="env-option"
-                :class="{ selected: selectedEnv === env }"
-                @click="selectedEnv = env"
-              >
-                {{ env }}
-              </button>
-            </div>
+      <div class="coming-soon-container">
+        <div class="coming-soon-card">
+          <div class="coming-soon-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+              <path d="M12 2a10 10 0 0 1 10 10"/>
+              <path d="M12 2a10 10 0 0 0-10 10" opacity="0.5"/>
+            </svg>
           </div>
-
-          <div class="param-group">
-            <label class="param-label">流水线构建 Build Version</label>
-            <input 
-              type="text" 
-              class="input-field"
-              v-model="buildVersion"
-              placeholder="请输入 build_version，例如: 30048100"
-            />
-          </div>
-
-          <div class="param-group">
-            <label class="param-label">升级方式</label>
-            <div class="upgrade-mode-grid">
-              <button
-                v-for="mode in upgradeModes"
-                :key="mode.value"
-                class="mode-option"
-                :class="{ selected: selectedMode === mode.value }"
-                @click="selectedMode = mode.value"
-              >
-                {{ mode.label }}
-              </button>
-            </div>
-          </div>
-
-          <div v-if="generatedCommand" class="command-preview">
-            <div class="command-label">生成的命令：</div>
-            <div class="command-text">{{ generatedCommand }}</div>
-          </div>
-
-          <button 
-            class="submit-button"
-            :disabled="!canSubmit"
-            @click="executeCommand"
-          >
-            提交执行
-          </button>
-
-          <div v-if="resultMessage" :class="['result-message', resultType]">
-            {{ resultMessage }}
-          </div>
+          <h2 class="coming-soon-title">功能暂未开放</h2>
+          <p class="coming-soon-subtitle">敬请期待！</p>
+          <div class="coming-soon-divider"></div>
+          <p class="coming-soon-desc">小鲁班自验证功能正在开发中，即将上线</p>
         </div>
-
-        <div v-else-if="currentAction === 'test'">
-          <div class="panel-title">测试功能</div>
-          <div class="test-form">
-            <div class="test-info">
-              <p>测试功能将执行自验证测试流程</p>
-              <p style="margin-top: 12px; color: var(--text-secondary);">点击下方按钮开始测试</p>
-            </div>
-            <button 
-              class="submit-button"
-              @click="executeTest"
-            >
-              开始测试
-            </button>
-            <div v-if="resultMessage" :class="['result-message', resultType]">
-              {{ resultMessage }}
-            </div>
-          </div>
-        </div>
-
-        <div v-else-if="currentAction === 'reset'">
-          <div class="panel-title">复位功能</div>
-          <div class="reset-form">
-            <div class="reset-info">
-              <p>复位功能将恢复系统至初始状态</p>
-              <p style="margin-top: 12px; color: var(--text-secondary);">点击下方按钮执行复位</p>
-            </div>
-            <button 
-              class="submit-button"
-              @click="executeReset"
-            >
-              执行复位
-            </button>
-            <div v-if="resultMessage" :class="['result-message', resultType]">
-              {{ resultMessage }}
-            </div>
-          </div>
-        </div>
+</div>
       </div>
     </div>
 
@@ -1134,6 +1027,112 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Coming Soon 样式 */
+.coming-soon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  padding: 40px 20px;
+}
+
+.coming-soon-card {
+  text-align: center;
+  padding: 60px 80px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(138, 43, 226, 0.08) 100%);
+  border: 2px solid rgba(0, 212, 255, 0.3);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  max-width: 600px;
+  box-shadow: 
+    0 0 40px rgba(0, 212, 255, 0.2),
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: cardFloat 3s ease-in-out infinite;
+}
+
+.coming-soon-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(0, 212, 255, 0.8) 50%, 
+    transparent 100%);
+  animation: scanLine 2s linear infinite;
+}
+
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scanLine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.coming-soon-icon {
+  margin-bottom: 24px;
+  color: rgba(0, 212, 255, 0.8);
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.coming-soon-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  letter-spacing: 2px;
+}
+
+.coming-soon-subtitle {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 32px;
+  opacity: 0.9;
+  letter-spacing: 3px;
+}
+
+.coming-soon-divider {
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  margin: 0 auto 24px;
+}
+
+.coming-soon-desc {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  line-height: 1.6;
 }
 
 .env-type-header {

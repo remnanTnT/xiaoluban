@@ -468,7 +468,8 @@ def login(request):
             try:
                 verify_result = json.loads(result.stdout.strip())
                 if verify_result.get('success'):
-                    logger.info(f"登录成功: uid={uid}")
+                    logger.info(f"登录成功: uid={uid}, statusCode={verify_result.get('statusCode')}")
+                    logger.info(f"w3-verify 返回: {verify_result}")
                     return JsonResponse({
                         'success': True,
                         'uid': uid

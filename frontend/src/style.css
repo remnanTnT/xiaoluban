@@ -408,12 +408,16 @@ body {
 }
 
 .login-page {
-  max-width: 400px;
+  max-width: 500px;
   margin: 100px auto;
   padding: 40px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 16px;
   border: 1px solid var(--border-color);
+}
+
+.login-page .app-title {
+  white-space: nowrap;
 }
 
 .login-panel {

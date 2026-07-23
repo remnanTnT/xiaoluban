@@ -2,7 +2,7 @@
   <div class="app-container">
     <div v-if="!isLoggedIn" class="login-page">
       <h1 class="app-title">小鲁班自验证工具</h1>
-      <p class="app-subtitle">自动化测试与部署平台</p>
+      <p class="app-subtitle">自动化测试和环境排队平台</p>
       
       <div class="login-panel">
         <div class="panel-title">W3 账号登录</div>
@@ -47,7 +47,7 @@
       <div class="header-bar">
         <div class="header-left">
           <h1 class="app-title">小鲁班自验证工具</h1>
-          <p class="app-subtitle">自动化测试与部署平台</p>
+          <p class="app-subtitle">自动化测试和环境排队平台</p>
         </div>
         <div class="header-right">
           <span class="user-info">当前用户: {{ currentUser }}</span>

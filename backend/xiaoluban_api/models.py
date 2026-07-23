@@ -20,6 +20,7 @@ class Environment(models.Model):
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_IDLE)
     occupant = models.CharField(max_length=100, blank=True, null=True)
+    queued_users = models.TextField(blank=True, null=True)
     is_used = models.BooleanField(default=True)
     offline_time = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

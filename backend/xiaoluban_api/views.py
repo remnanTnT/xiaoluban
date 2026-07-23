@@ -88,13 +88,30 @@ def get_environments(request):
     from .models import Environment
     
     try:
-        environments = Environment.objects.filter(is_used=True).values(
-            'id', 'name', 'description', 'status', 'occupant', 
-            'is_used', 'offline_time', 'created_at', 'updated_at'
-        )
+        environments = Environment.objects.filter(is_used=True)
+        
+        env_list = []
+        for env in environments:
+            queued_users = []
+            if env.queued_users:
+                queued_users = [u.strip() for u in env.queued_users.split(',') if u.strip()]
+            
+            env_list.append({
+                'id': env.id,
+                'name': env.name,
+                'description': env.description,
+                'status': env.status,
+                'occupant': env.occupant,
+                'queued_users': queued_users,
+                'is_used': env.is_used,
+                'offline_time': env.offline_time,
+                'created_at': env.created_at,
+                'updated_at': env.updated_at
+            })
+        
         return JsonResponse({
             'success': True,
-            'environments': list(environments)
+            'environments': env_list
         })
     except Exception as e:
         logger.error(f"获取环境列表失败: {str(e)}")
@@ -253,7 +270,7 @@ def get_history(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def occupy_environment(request):
-    """占用环境"""
+    """占用环境或排队"""
     import json
     from datetime import datetime
     from .models import Environment, EnvironmentUsage
@@ -283,39 +300,80 @@ def occupy_environment(request):
                 'error': f'环境 "{name}" 不存在'
             }, status=404)
         
-        if env.status == Environment.STATUS_OCCUPIED:
+        # 如果环境空闲，直接占用
+        if env.status == Environment.STATUS_IDLE:
+            env.status = Environment.STATUS_OCCUPIED
+            env.occupant = occupant
+            env.queued_users = None
+            env.save()
+            
+            usage = EnvironmentUsage(
+                env_name=name,
+                occupant=occupant,
+                occupy_time=datetime.now()
+            )
+            usage.save()
+            
+            logger.info(f"环境 {name} 被 {occupant} 占用")
+            
             return JsonResponse({
-                'success': False,
-                'error': f'环境 "{name}" 已被 {env.occupant} 占用'
-            }, status=400)
+                'success': True,
+                'action': 'occupied',
+                'environment': {
+                    'id': env.id,
+                    'name': env.name,
+                    'status': env.status,
+                    'occupant': env.occupant
+                }
+            })
         
-        env.status = Environment.STATUS_OCCUPIED
-        env.occupant = occupant
+        # 环境已被占用，检查是否已在排队
+        queued_list = []
+        if env.queued_users:
+            queued_list = [u.strip() for u in env.queued_users.split(',') if u.strip()]
+        
+        # 如果当前用户已在排队，取消排队
+        if occupant in queued_list:
+            queued_list.remove(occupant)
+            env.queued_users = ','.join(queued_list) if queued_list else None
+            env.save()
+            
+            logger.info(f"用户 {occupant} 取消排队环境 {name}")
+            
+            return JsonResponse({
+                'success': True,
+                'action': 'queue_cancelled',
+                'environment': {
+                    'id': env.id,
+                    'name': env.name,
+                    'status': env.status,
+                    'occupant': env.occupant,
+                    'queued_users': queued_list
+                }
+            })
+        
+        # 添加到排队列表
+        queued_list.append(occupant)
+        env.queued_users = ','.join(queued_list)
         env.save()
         
-        # 创建占用记录
-        usage = EnvironmentUsage(
-            env_name=name,
-            occupant=occupant,
-            occupy_time=datetime.now()
-        )
-        usage.save()
-        
-        logger.info(f"环境 {name} 被 {occupant} 占用")
+        logger.info(f"用户 {occupant} 排队环境 {name}，当前排队人数: {len(queued_list)}")
         
         return JsonResponse({
             'success': True,
+            'action': 'queued',
+            'queue_position': len(queued_list),
             'environment': {
                 'id': env.id,
                 'name': env.name,
                 'status': env.status,
-                'occupant': env.occupant
-            },
-            'usage_id': usage.id
+                'occupant': env.occupant,
+                'queued_users': queued_list
+            }
         })
         
     except Exception as e:
-        logger.error(f"占用环境失败: {str(e)}")
+        logger.error(f"占用/排队环境失败: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -349,10 +407,6 @@ def release_environment(request):
                 'error': f'环境 "{name}" 不存在'
             }, status=404)
         
-        env.status = Environment.STATUS_IDLE
-        env.occupant = None
-        env.save()
-        
         # 更新占用记录
         latest_usage = EnvironmentUsage.objects.filter(
             env_name=name, 
@@ -364,17 +418,60 @@ def release_environment(request):
             latest_usage.is_manual_release = EnvironmentUsage.RELEASE_MANUAL if is_manual else EnvironmentUsage.RELEASE_AUTO
             latest_usage.save()
         
-        logger.info(f"环境 {name} 已释放")
+        # 检查是否有排队用户
+        next_occupant = None
+        if env.queued_users:
+            queued_list = [u.strip() for u in env.queued_users.split(',') if u.strip()]
+            if queued_list:
+                next_occupant = queued_list[0]
+                queued_list = queued_list[1:]
         
-        return JsonResponse({
-            'success': True,
-            'environment': {
-                'id': env.id,
-                'name': env.name,
-                'status': env.status,
-                'occupant': env.occupant
-            }
-        })
+        if next_occupant:
+            # 排队第一人自动占用
+            env.occupant = next_occupant
+            env.queued_users = ','.join(queued_list) if queued_list else None
+            env.save()
+            
+            usage = EnvironmentUsage(
+                env_name=name,
+                occupant=next_occupant,
+                occupy_time=datetime.now()
+            )
+            usage.save()
+            
+            logger.info(f"环境 {name} 已释放，排队用户 {next_occupant} 自动占用")
+            
+            return JsonResponse({
+                'success': True,
+                'action': 'transferred',
+                'environment': {
+                    'id': env.id,
+                    'name': env.name,
+                    'status': env.status,
+                    'occupant': next_occupant,
+                    'queued_users': queued_list
+                }
+            })
+        else:
+            # 没有排队用户，设置为空闲
+            env.status = Environment.STATUS_IDLE
+            env.occupant = None
+            env.queued_users = None
+            env.save()
+            
+            logger.info(f"环境 {name} 已释放，无排队用户")
+            
+            return JsonResponse({
+                'success': True,
+                'action': 'released',
+                'environment': {
+                    'id': env.id,
+                    'name': env.name,
+                    'status': env.status,
+                    'occupant': None,
+                    'queued_users': []
+                }
+            })
         
     except Exception as e:
         logger.error(f"释放环境失败: {str(e)}")

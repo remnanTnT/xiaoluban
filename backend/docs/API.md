@@ -86,6 +86,9 @@
       "description": "环境描述",
       "status": "idle",
       "occupant": null,
+      "queued_users": [],
+      "is_used": true,
+      "offline_time": null,
       "created_at": "2024-01-01T00:00:00Z",
       "updated_at": "2024-01-01T00:00:00Z"
     },
@@ -95,6 +98,9 @@
       "description": "环境描述",
       "status": "occupied",
       "occupant": "user123",
+      "queued_users": ["user456", "user789"],
+      "is_used": true,
+      "offline_time": null,
       "created_at": "2024-01-01T00:00:00Z",
       "updated_at": "2024-01-01T00:00:00Z"
     }
@@ -105,6 +111,9 @@
 **状态说明：**
 - `idle`: 空闲
 - `occupied`: 占用
+
+**字段说明：**
+- `queued_users`: 排队用户列表，按排队顺序排列
 
 ---
 
@@ -165,7 +174,12 @@
 
 **POST** `/api/environments/occupy`
 
-占用指定环境。环境必须处于 "空闲" 状态才能被占用。
+占用指定环境或加入排队。
+
+**行为说明：**
+- 如果环境空闲 → 直接占用
+- 如果环境已被占用且用户不在排队中 → 加入排队
+- 如果用户已在排队中 → 取消排队（不影响其他人的排队顺序）
 
 **请求体：**
 ```json
@@ -175,24 +189,49 @@
 }
 ```
 
-**响应：**
+**成功占用响应：**
 ```json
 {
   "success": true,
+  "action": "occupied",
   "environment": {
     "id": 1,
     "name": "环境名称",
     "status": "occupied",
-    "occupant": "占用人"
+    "occupant": "占用人",
+    "queued_users": []
   }
 }
 ```
 
-**错误响应：**
+**加入排队响应：**
 ```json
 {
-  "success": false,
-  "error": "环境 \"环境名称\" 已被 user123 占用"
+  "success": true,
+  "action": "queued",
+  "queue_position": 2,
+  "environment": {
+    "id": 1,
+    "name": "环境名称",
+    "status": "occupied",
+    "occupant": "其他用户",
+    "queued_users": ["占用人"]
+  }
+}
+```
+
+**取消排队响应：**
+```json
+{
+  "success": true,
+  "action": "queue_cancelled",
+  "environment": {
+    "id": 1,
+    "name": "环境名称",
+    "status": "occupied",
+    "occupant": "其他用户",
+    "queued_users": []
+  }
 }
 ```
 
@@ -202,24 +241,49 @@
 
 **POST** `/api/environments/release`
 
-释放指定环境。释放后状态变为 "空闲"，占用人清空。
+释放指定环境。
+
+**行为说明：**
+- 如果有排队用户 → 排队第一人自动占用环境
+- 如果没有排队用户 → 环境变为空闲状态
 
 **请求体：**
 ```json
 {
-  "name": "环境名称"
+  "name": "环境名称",
+  "is_manual": true
 }
 ```
 
-**响应：**
+**参数说明：**
+- `is_manual` (可选): 是否手动释放，默认 true
+
+**自动转给排队用户响应：**
 ```json
 {
   "success": true,
+  "action": "transferred",
+  "environment": {
+    "id": 1,
+    "name": "环境名称",
+    "status": "occupied",
+    "occupant": "排队用户1",
+    "queued_users": ["排队用户2"]
+  }
+}
+```
+
+**完全释放响应：**
+```json
+{
+  "success": true,
+  "action": "released",
   "environment": {
     "id": 1,
     "name": "环境名称",
     "status": "idle",
-    "occupant": null
+    "occupant": null,
+    "queued_users": []
   }
 }
 ```

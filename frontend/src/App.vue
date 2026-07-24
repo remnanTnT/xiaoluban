@@ -1101,9 +1101,9 @@ onUnmounted(() => {
 
 .notice-refresh-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  align-items: center;
+  margin-bottom: 12px;
   padding-right: calc(400px + 24px);
 }
 

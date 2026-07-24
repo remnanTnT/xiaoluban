@@ -352,7 +352,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+// 使用空值合并运算符，允许空字符串（相对路径，通过代理）
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const activeTab = ref('roce')
 const currentAction = ref('')

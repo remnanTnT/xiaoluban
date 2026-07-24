@@ -19,6 +19,27 @@ from django.utils import timezone
 logger = logging.getLogger('xiaoluban_api')
 
 
+def serialize_datetime(dt):
+    """
+    序列化datetime对象为本地时间字符串
+    
+    Args:
+        dt: datetime对象（可能是timezone-aware或naive）
+    
+    Returns:
+        str: 本地时间字符串 (格式: "2026-07-24 10:20:29")
+    """
+    if dt is None:
+        return None
+    
+    # 如果是timezone-aware，转换为本地时间（Asia/Shanghai）
+    if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+        from django.utils.timezone import localtime
+        dt = localtime(dt)
+    
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def execute_command(request):
@@ -106,9 +127,9 @@ def get_environments(request):
                 'occupant': env.occupant,
                 'queued_users': queued_users,
                 'is_used': env.is_used,
-                'offline_time': env.offline_time,
-                'created_at': env.created_at,
-                'updated_at': env.updated_at
+                'offline_time': serialize_datetime(env.offline_time),
+                'created_at': serialize_datetime(env.created_at),
+                'updated_at': serialize_datetime(env.updated_at)
             })
         
         return JsonResponse({
@@ -570,15 +591,24 @@ def get_environment_usage(request):
         if env_name:
             usages = usages.filter(env_name=env_name)
         
-        usages = usages[:limit].values(
-            'id', 'env_name', 'occupant', 
-            'occupy_time', 'release_time', 'is_manual_release',
-            'created_at'
-        )
+        usages = usages[:limit]
+        
+        # 手动序列化时间字段
+        usage_list = []
+        for usage in usages:
+            usage_list.append({
+                'id': usage.id,
+                'env_name': usage.env_name,
+                'occupant': usage.occupant,
+                'occupy_time': serialize_datetime(usage.occupy_time),
+                'release_time': serialize_datetime(usage.release_time),
+                'is_manual_release': usage.is_manual_release,
+                'created_at': serialize_datetime(usage.created_at)
+            })
         
         return JsonResponse({
             'success': True,
-            'usages': list(usages)
+            'usages': usage_list
         })
     except Exception as e:
         logger.error(f"获取占用记录失败: {str(e)}")

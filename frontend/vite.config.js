@@ -9,6 +9,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: true
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://7.197.65.7:6000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })

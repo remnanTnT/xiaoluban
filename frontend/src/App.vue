@@ -1105,6 +1105,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-right: calc(400px + 24px);
+  margin-top: -12px;
 }
 
 .notice-content {
@@ -1193,6 +1194,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  margin-top: -24px;
 }
 
 .env-type-group {

@@ -73,7 +73,7 @@ class EnvironmentUsage(models.Model):
     occupant = models.CharField(max_length=100)
     occupy_time = models.DateTimeField()
     release_time = models.DateTimeField(null=True, blank=True)
-    is_manual_release = models.CharField(max_length=10, choices=RELEASE_CHOICES, default=RELEASE_MANUAL)
+    is_manual_release = models.CharField(max_length=10, choices=RELEASE_CHOICES, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

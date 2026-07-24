@@ -15,7 +15,7 @@
 import logging
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from datetime import datetime
+from django.utils import timezone
 
 logger = logging.getLogger('xiaoluban_api')
 
@@ -66,7 +66,7 @@ class Command(BaseCommand):
                 ).order_by('-occupy_time').first()
                 
                 if latest_usage:
-                    latest_usage.release_time = datetime.now()
+                    latest_usage.release_time = timezone.now()
                     latest_usage.is_manual_release = EnvironmentUsage.RELEASE_AUTO
                     latest_usage.save()
                     self.stdout.write(f"  更新占用记录: {env.name} -> 自动释放")

@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.utils import timezone
 
 logger = logging.getLogger('xiaoluban_api')
 
@@ -201,7 +202,6 @@ def add_environment(request):
 def remove_environment(request):
     """移除环境（软删除）"""
     import json
-    from datetime import datetime
     from .models import Environment
     
     try:
@@ -229,7 +229,7 @@ def remove_environment(request):
             }, status=400)
         
         env.is_used = False
-        env.offline_time = datetime.now()
+        env.offline_time = timezone.now()
         env.status = Environment.STATUS_IDLE
         env.occupant = None
         env.save()
@@ -349,7 +349,6 @@ def get_history(request):
 def occupy_environment(request):
     """占用环境或排队"""
     import json
-    from datetime import datetime
     from .models import Environment, EnvironmentUsage
     
     try:
@@ -387,7 +386,7 @@ def occupy_environment(request):
             usage = EnvironmentUsage(
                 env_name=name,
                 occupant=occupant,
-                occupy_time=datetime.now()
+                occupy_time=timezone.now()
             )
             usage.save()
             
@@ -462,7 +461,6 @@ def occupy_environment(request):
 def release_environment(request):
     """释放环境"""
     import json
-    from datetime import datetime
     from .models import Environment, EnvironmentUsage
     
     try:
@@ -491,7 +489,7 @@ def release_environment(request):
         ).order_by('-occupy_time').first()
         
         if latest_usage:
-            latest_usage.release_time = datetime.now()
+            latest_usage.release_time = timezone.now()
             latest_usage.is_manual_release = EnvironmentUsage.RELEASE_MANUAL if is_manual else EnvironmentUsage.RELEASE_AUTO
             latest_usage.save()
         
@@ -512,7 +510,7 @@ def release_environment(request):
             usage = EnvironmentUsage(
                 env_name=name,
                 occupant=next_occupant,
-                occupy_time=datetime.now()
+                occupy_time=timezone.now()
             )
             usage.save()
             

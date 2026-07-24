@@ -114,7 +114,7 @@ def execute_command(request):
 def get_environments(request):
     """获取环境列表（只返回 is_used=True 的环境）"""
     from .models import Environment
-    from django.utils.timezone import now
+    from django.utils.timezone import now, make_aware
     
     try:
         environments = Environment.objects.filter(is_used=True)
@@ -128,7 +128,13 @@ def get_environments(request):
             # 计算创建天数
             created_days = 0
             if env.created_at:
-                delta = now() - env.created_at
+                # 处理naive datetime（历史数据）
+                created_at = env.created_at
+                if created_at.tzinfo is None:
+                    # naive datetime，假设为本地时间，转换为aware
+                    created_at = make_aware(created_at)
+                
+                delta = now() - created_at
                 created_days = delta.days
             
             env_list.append({

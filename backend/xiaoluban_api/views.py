@@ -32,20 +32,29 @@ def serialize_datetime(dt):
     if dt is None:
         return None
     
-    from django.utils.timezone import localtime, make_aware
+    from django.utils.timezone import localtime
     from django.conf import settings
     import pytz
+    from datetime import datetime
     
-    # 处理naive datetime（历史数据）
-    if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-        # Django在USE_TZ=True时，数据库读取的naive datetime是UTC时间
-        # 需要标记为UTC，然后转换为本地时间
-        utc_tz = pytz.UTC
-        dt = utc_tz.localize(dt)
+    # timezone-aware：直接转换为本地时间
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        local_dt = localtime(dt)
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
-    # 转换为本地时间（Asia/Shanghai）
-    local_dt = localtime(dt)
-    return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    # naive datetime的处理策略：
+    # Django在USE_TZ=True时，从timestamp without time zone读取的数据会被当作naive
+    # 我们需要判断这是UTC还是本地时间
+    
+    # 简单策略：假设naive datetime是本地时间（历史数据的实际情况）
+    # 因为历史数据用datetime.now()写入的是本地时间
+    # 新数据用timezone.now()写入的，虽然存储为UTC，但读取后应该是timezone-aware
+    # 如果是naive，说明是历史数据
+    
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    dt = local_tz.localize(dt)
+    
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
     
     # timezone-aware：转换为本地时间
     local_dt = localtime(dt)

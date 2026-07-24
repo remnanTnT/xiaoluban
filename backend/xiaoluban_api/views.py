@@ -538,16 +538,19 @@ def release_environment(request):
                 'error': f'环境 "{name}" 不存在'
             }, status=404)
         
-        # 更新占用记录
+        # 更新占用记录（使用update确保只修改release_time）
         latest_usage = EnvironmentUsage.objects.filter(
             env_name=name, 
             release_time__isnull=True
         ).order_by('-occupy_time').first()
         
         if latest_usage:
-            latest_usage.release_time = timezone.now()
-            latest_usage.is_manual_release = EnvironmentUsage.RELEASE_MANUAL if is_manual else EnvironmentUsage.RELEASE_AUTO
-            latest_usage.save()
+            # 使用update()而不是save()，确保只修改release_time和is_manual_release
+            # 绝对不会影响occupy_time
+            EnvironmentUsage.objects.filter(id=latest_usage.id).update(
+                release_time=timezone.now(),
+                is_manual_release=EnvironmentUsage.RELEASE_MANUAL if is_manual else EnvironmentUsage.RELEASE_AUTO
+            )
         
         # 检查是否有排队用户
         next_occupant = None

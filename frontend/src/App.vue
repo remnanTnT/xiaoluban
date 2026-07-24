@@ -1016,12 +1016,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
   margin-bottom: 20px;
-  background: rgba(0, 212, 255, 0.04);
-  border: 1px solid rgba(0, 212, 255, 0.12);
-  border-left: 3px solid rgba(0, 212, 255, 0.35);
-  border-radius: 6px;
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;

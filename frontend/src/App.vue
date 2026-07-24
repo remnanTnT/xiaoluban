@@ -1653,7 +1653,7 @@ onUnmounted(() => {
   padding: 24px;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
-  margin-top: -8px;
+  margin-top: -16px;
 }
 
 .history-panel::-webkit-scrollbar {

@@ -1182,6 +1182,7 @@ onUnmounted(() => {
   grid-template-columns: 1fr 400px;
   gap: 12px;
   align-items: start;
+  margin-top: 16px;
 }
 
 .environments-grid {
@@ -1194,7 +1195,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  margin-top: -12px;
 }
 
 .env-type-group {
@@ -1655,7 +1655,6 @@ onUnmounted(() => {
   padding: 24px;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
-  margin-top: -12px;
 }
 
 .history-panel::-webkit-scrollbar {

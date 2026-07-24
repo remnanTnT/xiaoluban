@@ -32,29 +32,38 @@ def serialize_datetime(dt):
     if dt is None:
         return None
     
-    from django.utils.timezone import localtime
+    from django.utils.timezone import localtime, make_aware
     from django.conf import settings
     import pytz
     from datetime import datetime
     
-    # timezone-aware：直接转换为本地时间
+    # 调试日志
+    logger.debug(f"serialize_datetime输入: {dt}, tzinfo={dt.tzinfo if hasattr(dt, 'tzinfo') else 'N/A'}")
+    
+    # timezone-aware：转换为本地时间
     if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
         local_dt = localtime(dt)
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        result = local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        logger.debug(f"timezone-aware转换: {dt} -> {local_dt} -> {result}")
+        return result
     
     # naive datetime的处理策略：
-    # Django在USE_TZ=True时，从timestamp without time zone读取的数据会被当作naive
-    # 我们需要判断这是UTC还是本地时间
+    # 在USE_TZ=True且数据库为timestamp without time zone的情况下：
+    # - 新数据：用timezone.now()写入UTC时间，读取后Django会自动标记为UTC-aware
+    # - 历史数据：用datetime.now()写入本地时间，读取后是naive
     
-    # 简单策略：假设naive datetime是本地时间（历史数据的实际情况）
-    # 因为历史数据用datetime.now()写入的是本地时间
-    # 新数据用timezone.now()写入的，虽然存储为UTC，但读取后应该是timezone-aware
-    # 如果是naive，说明是历史数据
+    # 如果到这里说明是naive，可能是：
+    # 1. 历史数据（本地时间）
+    # 2. Django没有正确处理时区
     
-    local_tz = pytz.timezone(settings.TIME_ZONE)
-    dt = local_tz.localize(dt)
-    
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
+    # 策略：假设naive是UTC时间（符合Django USE_TZ=True的预期）
+    # 然后转换为本地时间
+    utc_tz = pytz.UTC
+    dt_utc = utc_tz.localize(dt)
+    local_dt = localtime(dt_utc)
+    result = local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    logger.debug(f"naive转UTC再转本地: {dt} -> {dt_utc} -> {local_dt} -> {result}")
+    return result
     
     # timezone-aware：转换为本地时间
     local_dt = localtime(dt)

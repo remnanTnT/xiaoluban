@@ -114,6 +114,7 @@ def execute_command(request):
 def get_environments(request):
     """获取环境列表（只返回 is_used=True 的环境）"""
     from .models import Environment
+    from django.utils.timezone import now
     
     try:
         environments = Environment.objects.filter(is_used=True)
@@ -123,6 +124,12 @@ def get_environments(request):
             queued_users = []
             if env.queued_users:
                 queued_users = [u.strip() for u in env.queued_users.split(',') if u.strip()]
+            
+            # 计算创建天数
+            created_days = 0
+            if env.created_at:
+                delta = now() - env.created_at
+                created_days = delta.days
             
             env_list.append({
                 'id': env.id,
@@ -135,7 +142,8 @@ def get_environments(request):
                 'is_used': env.is_used,
                 'offline_time': serialize_datetime(env.offline_time),
                 'created_at': serialize_datetime(env.created_at),
-                'updated_at': serialize_datetime(env.updated_at)
+                'updated_at': serialize_datetime(env.updated_at),
+                'created_days': created_days
             })
         
         return JsonResponse({

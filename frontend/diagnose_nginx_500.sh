@@ -3,6 +3,15 @@
 # 用法: ./diagnose_nginx_500.sh [日志文件路径]
 # 示例: ./diagnose_nginx_500.sh /tmp/nginx_debug.log
 
+# 自动转换Windows换行符(CRLF)为Unix换行符(LF)
+SCRIPT_PATH="$0"
+if file "$SCRIPT_PATH" | grep -q "CRLF\|with CR line terminators"; then
+    echo "检测到Windows换行符，正在自动转换..."
+    sed -i 's/\r$//' "$SCRIPT_PATH"
+    echo "换行符转换完成，请重新执行脚本"
+    exit 0
+fi
+
 # ==================== 配置区域 ====================
 LOG_FILE="${1:-/home/xiaoluban/logs/nginx_diagnose_$(date +%Y%m%d_%H%M%S).log}"
 FRONTEND_DIR="/home/xiaoluban/frontend"

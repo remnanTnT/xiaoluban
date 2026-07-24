@@ -102,36 +102,37 @@
         </button>
       </div>
 
-      <div class="daily-reset-notice">
-        <svg class="notice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        <span>提醒：每日凌晨会清空环境的占用和排队信息，如有需要请重新占用！</span>
-      </div>
-
-      <div class="refresh-controls">
-        <button 
-          class="refresh-btn" 
-          @click="manualRefresh" 
-          :disabled="isRefreshing"
-          title="手动刷新">
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            stroke-width="2" 
-            stroke-linecap="round" 
-            stroke-linejoin="round"
-            :class="{ 'spinning': isRefreshing }">
-            <polyline points="23 4 23 10 17 10"/>
-            <polyline points="1 20 1 14 7 14"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      <div class="notice-refresh-row">
+        <div class="notice-content">
+          <svg class="notice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
           </svg>
-        </button>
-        <span class="last-update">最后更新：{{ formatLastUpdateTime() }}</span>
+          <span>提醒：每日凌晨会清空环境的占用和排队信息，如有需要请重新占用！</span>
+        </div>
+        <div class="refresh-controls">
+          <button 
+            class="refresh-btn" 
+            @click="manualRefresh" 
+            :disabled="isRefreshing"
+            title="手动刷新">
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              stroke-width="2" 
+              stroke-linecap="round" 
+              stroke-linejoin="round"
+              :class="{ 'spinning': isRefreshing }">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+          <span class="last-update">最后更新：{{ formatLastUpdateTime() }}</span>
+        </div>
       </div>
 
       <div class="roce-content">
@@ -1077,7 +1078,7 @@ onUnmounted(() => {
 .roce-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .edit-button {
@@ -1098,17 +1099,24 @@ onUnmounted(() => {
   border-color: var(--primary-color);
 }
 
-.daily-reset-notice {
+.notice-refresh-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-right: calc(400px + 24px);
+}
+
+.notice-content {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
 }
 
-.daily-reset-notice .notice-icon {
+.notice-content .notice-icon {
   flex-shrink: 0;
   color: var(--primary-color);
   opacity: 0.6;
@@ -1118,7 +1126,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .refresh-btn {
@@ -2047,6 +2055,9 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .roce-content {
     grid-template-columns: 1fr;
+  }
+  .notice-refresh-row {
+    padding-right: 0;
   }
 }
 

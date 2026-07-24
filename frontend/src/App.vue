@@ -1078,7 +1078,7 @@ onUnmounted(() => {
 .roce-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .edit-button {
@@ -1103,7 +1103,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   padding-right: calc(400px + 24px);
 }
 
@@ -1179,7 +1179,7 @@ onUnmounted(() => {
 .roce-content {
   display: grid;
   grid-template-columns: 1fr 400px;
-  gap: 24px;
+  gap: 12px;
   align-items: start;
 }
 

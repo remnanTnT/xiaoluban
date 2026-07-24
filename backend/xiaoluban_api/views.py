@@ -32,12 +32,18 @@ def serialize_datetime(dt):
     if dt is None:
         return None
     
-    # 如果是timezone-aware，转换为本地时间（Asia/Shanghai）
-    if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-        from django.utils.timezone import localtime
-        dt = localtime(dt)
+    from django.utils.timezone import localtime, make_aware
+    from django.conf import settings
     
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
+    # 处理naive datetime（历史数据）
+    if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
+        # naive datetime：假设为本地时间（Asia/Shanghai）
+        # 直接格式化，不进行转换
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # timezone-aware：转换为本地时间
+    local_dt = localtime(dt)
+    return local_dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 @csrf_exempt

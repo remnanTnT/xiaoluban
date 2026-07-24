@@ -110,6 +110,30 @@
         <span>提醒：每日凌晨会清空环境的占用和排队信息，如有需要请重新占用！</span>
       </div>
 
+      <div class="refresh-controls">
+        <button 
+          class="refresh-btn" 
+          @click="manualRefresh" 
+          :disabled="isRefreshing"
+          title="手动刷新">
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="2" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"
+            :class="{ 'spinning': isRefreshing }">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <span class="last-update">最后更新：{{ formatLastUpdateTime() }}</span>
+      </div>
+
       <div class="roce-content">
         <div class="env-groups-container">
           <template v-for="group in groupedEnvironments" :key="group.type">
@@ -358,7 +382,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 
 // 使用空值合并运算符，允许空字符串（相对路径，通过代理）
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -385,6 +409,11 @@ const newEnvDesc = ref('')
 const newEnvType = ref('')
 const selectedHistoryEnv = ref('')
 const historyData = ref([])
+
+// 轮询相关状态
+const lastUpdateTime = ref(new Date())
+const isRefreshing = ref(false)
+let pollInterval = null
 
 // 编辑环境信息相关状态
 const showEditEnvModal = ref(false)
@@ -569,6 +598,7 @@ async function executeReset() {
 
 async function loadEnvironments() {
   try {
+    isRefreshing.value = true
     const response = await fetch(`${API_BASE}/api/environments`)
     const data = await response.json()
     if (data.success) {
@@ -606,7 +636,40 @@ async function loadEnvironments() {
     }
   } catch (error) {
     console.error('加载环境失败:', error)
+  } finally {
+    isRefreshing.value = false
+    lastUpdateTime.value = new Date()
   }
+}
+
+// 轮询相关函数
+const startPolling = () => {
+  if (!pollInterval) {
+    pollInterval = setInterval(() => {
+      loadEnvironments()
+    }, 10000) // 每10秒刷新一次
+  }
+}
+
+const stopPolling = () => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
+// 格式化最后更新时间
+const formatLastUpdateTime = () => {
+  const now = lastUpdateTime.value
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${hours}:${minutes}:${seconds}`
+}
+
+// 手动刷新
+const manualRefresh = async () => {
+  await loadEnvironments()
 }
 
 function isInQueue(env) {
@@ -913,6 +976,29 @@ watch(selectedHistoryEnv, loadHistory)
 
 onMounted(() => {
   loadEnvironments()
+  startPolling()
+  
+  // 监听页面可见性
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      stopPolling() // 页面隐藏时暂停轮询
+    } else {
+      loadEnvironments() // 页面重新可见时立即刷新
+      startPolling() // 恢复轮询
+    }
+  }
+  
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  
+  // 保存事件处理器引用，以便清理
+  window._visibilityHandler = handleVisibilityChange
+})
+
+onUnmounted(() => {
+  stopPolling()
+  if (window._visibilityHandler) {
+    document.removeEventListener('visibilitychange', window._visibilityHandler)
+  }
 })
 </script>
 

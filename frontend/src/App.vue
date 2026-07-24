@@ -234,7 +234,7 @@
                 <br>
                 <span class="usage-label">释放时间:</span> {{ item.release_time ? formatFullDateTime(item.release_time) : '未释放' }}
                 <br>
-                <span class="usage-label">释放方式:</span> {{ item.is_manual_release === 'manual' ? '手动释放' : '自动释放' }}
+                <span class="usage-label">释放方式:</span> {{ item.release_time && item.is_manual_release ? (item.is_manual_release === 'manual' ? '手动释放' : '自动释放') : '-' }}
               </div>
             </div>
           </div>

@@ -7,6 +7,9 @@ django-cors-headers>=4.0
 # PostgreSQL 驱动
 psycopg2-binary>=2.9
 
+# 时区支持
+pytz>=2021.1
+
 # 开发工具
 python-dotenv>=1.0
 

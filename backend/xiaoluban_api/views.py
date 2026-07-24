@@ -34,12 +34,18 @@ def serialize_datetime(dt):
     
     from django.utils.timezone import localtime, make_aware
     from django.conf import settings
+    import pytz
     
     # 处理naive datetime（历史数据）
     if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-        # naive datetime：假设为本地时间（Asia/Shanghai）
-        # 直接格式化，不进行转换
-        return dt.strftime('%Y-%m-%d %H:%M:%S')
+        # Django在USE_TZ=True时，数据库读取的naive datetime是UTC时间
+        # 需要标记为UTC，然后转换为本地时间
+        utc_tz = pytz.UTC
+        dt = utc_tz.localize(dt)
+    
+    # 转换为本地时间（Asia/Shanghai）
+    local_dt = localtime(dt)
+    return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     # timezone-aware：转换为本地时间
     local_dt = localtime(dt)

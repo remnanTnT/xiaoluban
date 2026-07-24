@@ -1078,7 +1078,7 @@ onUnmounted(() => {
 .roce-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .edit-button {

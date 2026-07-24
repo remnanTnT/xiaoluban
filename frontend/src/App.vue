@@ -1105,7 +1105,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-right: calc(400px + 24px);
-  margin-top: -24px;
+  margin-top: -20px;
 }
 
 .notice-content {

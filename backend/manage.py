@@ -4,10 +4,17 @@ Django's command-line utility for administrative tasks.
 """
 import os
 import sys
+from pathlib import Path
 
 
 def main():
     """Run administrative tasks."""
+    # 加载.env文件
+    env_file = Path(__file__).resolve().parent / '.env'
+    if env_file.exists():
+        from dotenv import load_dotenv
+        load_dotenv(env_file)
+    
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'xiaoluban_project.settings')
     try:
         from django.core.management import execute_from_command_line

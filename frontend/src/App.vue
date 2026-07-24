@@ -102,6 +102,14 @@
         </button>
       </div>
 
+      <div class="daily-reset-notice">
+        <svg class="notice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>提醒：每日凌晨会清空环境的占用和排队信息，如有需要请重新占用！</span>
+      </div>
+
       <div class="roce-content">
         <div class="env-groups-container">
           <template v-for="group in groupedEnvironments" :key="group.type">
@@ -1002,6 +1010,27 @@ onMounted(() => {
 .edit-button:hover {
   background: rgba(0, 212, 255, 0.1);
   border-color: var(--primary-color);
+}
+
+.daily-reset-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-left: 3px solid rgba(0, 212, 255, 0.35);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.daily-reset-notice .notice-icon {
+  flex-shrink: 0;
+  color: var(--primary-color);
+  opacity: 0.6;
 }
 
 .roce-content {

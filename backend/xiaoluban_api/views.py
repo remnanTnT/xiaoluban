@@ -571,6 +571,8 @@ def release_environment(request):
         
         if next_occupant:
             # 排队第一人自动占用
+            prev_occupant = env.occupant  # 记录前一个占用人
+            
             env.occupant = next_occupant
             env.queued_users = ','.join(queued_list) if queued_list else None
             env.save()
@@ -583,6 +585,21 @@ def release_environment(request):
             usage.save()
             
             logger.info(f"环境 {name} 已释放，排队用户 {next_occupant} 自动占用")
+            
+            # 发送通知给新的占用人
+            try:
+                from send_msg import send_msg
+                
+                # 构造消息内容
+                message_content = f"{prev_occupant} 已释放环境【{name}】，现在轮到您使用了。"
+                
+                # 发送消息
+                send_msg(message_content, next_occupant)
+                
+                logger.info(f"已发送通知给 {next_occupant}: {message_content}")
+            except Exception as e:
+                # 通知发送失败不影响主流程
+                logger.error(f"发送通知失败: {str(e)}")
             
             return JsonResponse({
                 'success': True,
